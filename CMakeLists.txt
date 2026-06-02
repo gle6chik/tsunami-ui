@@ -9,8 +9,18 @@ set(CMAKE_AUTOUIC ON)
 
 find_package(Qt6 REQUIRED COMPONENTS Widgets Network Concurrent)
 
-# Path to existing simulator headers (header-only parsers)
-set(SIM_INCLUDE_DIR "${CMAKE_SOURCE_DIR}/../MacCormackSimulation/MacCormackSimulation")
+# tsunami-core (SWE solver) provides the header-only target NskTSH::tsunami-io
+# (parsers/formats). Tracked as a git submodule at extern/tsunami-core; override
+# its location with -DTSUNAMI_CORE_DIR=<path> (e.g. a sibling checkout).
+set(TSUNAMI_CORE_DIR "${CMAKE_SOURCE_DIR}/extern/tsunami-core" CACHE PATH
+    "Path to the tsunami-core repository (git submodule by default)")
+
+if(NOT EXISTS "${TSUNAMI_CORE_DIR}/CMakeLists.txt")
+    message(FATAL_ERROR
+        "tsunami-core not found at ${TSUNAMI_CORE_DIR}. "
+        "Run 'git submodule update --init --recursive' or pass -DTSUNAMI_CORE_DIR=<path>.")
+endif()
+add_subdirectory(${TSUNAMI_CORE_DIR} ${CMAKE_BINARY_DIR}/tsunami-core)
 
 add_executable(TsunamiSimUI
     # Entry point
@@ -48,10 +58,10 @@ add_executable(TsunamiSimUI
 
 target_include_directories(TsunamiSimUI PRIVATE
     ${CMAKE_SOURCE_DIR}/src
-    ${SIM_INCLUDE_DIR}
 )
 
 target_link_libraries(TsunamiSimUI
+    NskTSH::tsunami-io
     Qt6::Widgets
     Qt6::Network
     Qt6::Concurrent

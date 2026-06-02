@@ -17,8 +17,10 @@ CMakeUserPresets.json
 *.dll
 *.user
 
-# Submodule checkout of the solver (provide via TSUNAMI_CORE_DIR)
-extern/
+# tsunami-core is tracked as a git submodule at extern/tsunami-core
+# (override its location with -DTSUNAMI_CORE_DIR=...). Ignore any other extern/ checkouts.
+/extern/*
+!/extern/tsunami-core
 
 # Misc
 .claude/

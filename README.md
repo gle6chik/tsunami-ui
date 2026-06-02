@@ -16,24 +16,21 @@ Data / results follow the workspace convention — see
 
 ## Build
 ```bash
-cmake -B build -DTSUNAMI_CORE_DIR=../tsunami-core/MacCormackSimulation
+git submodule update --init --recursive   # fetches extern/tsunami-core
+cmake -B build
 cmake --build build --config Release
 ```
 
 ## Dependency on tsunami-core
-The UI includes header-only parsers from the solver (`ASCParser`, `ZDataParser`,
-`DefaultParametersParser`, `EllipsoidalSource`, `CoordSystem`). Provide them via:
-- a sibling checkout of `tsunami-core` (default), or
-- a git submodule at `extern/tsunami-core`,
-
-and point CMake at it with `-DTSUNAMI_CORE_DIR=<path-to>/MacCormackSimulation`.
-
-> Note: `tsunami-core` is migrated separately; until then set `TSUNAMI_CORE_DIR`
-> to a local checkout of the solver sources.
+The UI consumes the header-only target [`NskTSH::tsunami-io`](https://github.com/NskTSH/tsunami-core)
+from the solver (parsers/formats: `ASCParser`, `ZDataParser`, `DefaultParametersParser`,
+`EllipsoidalSource`, `CoordSystem`). `tsunami-core` is tracked as a **git submodule** at
+`extern/tsunami-core`; CMake links the target automatically. To build against a different
+checkout, pass `-DTSUNAMI_CORE_DIR=<path-to-tsunami-core>`.
 
 ## Data & results
-Paths resolve from `NSKTSH_DATA` / `NSKTSH_RESULTS` (default `../tsunami-data`,
-`../results`). No absolute paths in code.
+Paths resolve from `NSKTSH_DATA` / `NSKTSH_RESULTS` (default `../Data`,
+`../Results` — folders one level above the repo). No absolute paths in code.
 
 ## License
 © NskTSH — internal/private. See `NOTICE`.
