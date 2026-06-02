@@ -9,16 +9,16 @@ set(CMAKE_AUTOUIC ON)
 
 find_package(Qt6 REQUIRED COMPONENTS Widgets Network Concurrent)
 
-# tsunami-core (SWE solver) provides the header-only target NskTSH::tsunami-io
-# (parsers/formats). Tracked as a git submodule at extern/tsunami-core; override
-# its location with -DTSUNAMI_CORE_DIR=<path> (e.g. a sibling checkout).
-set(TSUNAMI_CORE_DIR "${CMAKE_SOURCE_DIR}/extern/tsunami-core" CACHE PATH
-    "Path to the tsunami-core repository (git submodule by default)")
+# tsunami-core provides the header-only target NskTSH::tsunami-io (parsers/
+# formats/params/coord/sources). It is a SIBLING repo by workspace convention
+# (cloned next to tsunami-ui); override with -DTSUNAMI_CORE_DIR=<path>.
+set(TSUNAMI_CORE_DIR "${CMAKE_SOURCE_DIR}/../tsunami-core" CACHE PATH
+    "Path to the tsunami-core repository (sibling checkout by default)")
 
 if(NOT EXISTS "${TSUNAMI_CORE_DIR}/CMakeLists.txt")
     message(FATAL_ERROR
         "tsunami-core not found at ${TSUNAMI_CORE_DIR}. "
-        "Run 'git submodule update --init --recursive' or pass -DTSUNAMI_CORE_DIR=<path>.")
+        "Clone tsunami-core next to tsunami-ui, or pass -DTSUNAMI_CORE_DIR=<path>.")
 endif()
 add_subdirectory(${TSUNAMI_CORE_DIR} ${CMAKE_BINARY_DIR}/tsunami-core)
 

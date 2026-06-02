@@ -17,10 +17,8 @@ CMakeUserPresets.json
 *.dll
 *.user
 
-# tsunami-core is tracked as a git submodule at extern/tsunami-core
-# (override its location with -DTSUNAMI_CORE_DIR=...). Ignore any other extern/ checkouts.
-/extern/*
-!/extern/tsunami-core
+# Local third-party checkouts (tsunami-core is consumed as a sibling repo).
+/extern/
 
 # Misc
 .claude/

@@ -39,6 +39,15 @@ private:
     void setupUI();
     void parseProgressLine(const QString& line);
 
+    // Locate the simulator executable lazily (saved setting -> app-local
+    // simulator/ -> $TSUNAMI_SIMULATOR_HOME -> sibling build -> PATH).
+    // Returns an empty string if none is found; the UI still runs as a
+    // standalone results viewer in that case.
+    QString discoverSimulator() const;
+    // Enable/disable the Launch button and update the status line based on
+    // whether a valid simulator path is currently set.
+    void updateLaunchState();
+
     ParameterSet* params_ = nullptr;
     RunSession* session_ = nullptr;
     QProcess* process_ = nullptr;
