@@ -1,6 +1,8 @@
 tsunami-ui — part of NskTSH (Novosibirsk Tsunami Science Hub)
-Copyright (c) 2026 NskTSH. All rights reserved.
+Copyright (c) 2026 NskTSH
 
-This repository is internal/private. Redistribution outside the organization
-is not permitted without written consent. Third-party components (Qt, etc.)
-retain their original licenses.
+Licensed under the Apache License, Version 2.0 (the "License"); you may not use
+this file except in compliance with the License. You may obtain a copy in the
+LICENSE file or at http://www.apache.org/licenses/LICENSE-2.0.
+
+Third-party components (Qt, etc.) retain their original licenses.

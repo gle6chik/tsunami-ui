@@ -8,7 +8,7 @@ required to open and analyze results.
 ## Place in the NskTSH ecosystem
 - Depends on [`tsunami-core`](https://github.com/NskTSH/tsunami-core) — header-only
   I/O foundation (parsers/formats/params/coord/sources). **Sibling repo** by workspace convention.
-- Optionally runs [`tsunami-simulator`](https://github.com/NskTSH/tsunami-simulator) — the SWE solver,
+- Optionally runs `tsunami-simulator` (private) — the SWE solver,
   launched as an external `.exe` (discovered lazily; not required to start the UI).
 - Data / results: workspace convention — see
   [`tsunami-data/WORKSPACE.md`](https://github.com/NskTSH/tsunami-data/blob/master/WORKSPACE.md).
@@ -41,4 +41,4 @@ point to a simulator via **Browse…**.
 Paths resolve from `NSKTSH_DATA` / `NSKTSH_RESULTS` (default `../Data`, `../Results`). No absolute paths in code.
 
 ## License
-© NskTSH — internal/private. See `NOTICE`.
+Apache-2.0 © NskTSH — see [`LICENSE`](LICENSE) and `NOTICE`.
