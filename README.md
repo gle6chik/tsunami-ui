@@ -5,6 +5,11 @@ results, inspect coastal wave histograms / profiles over a map, and (optionally)
 launch simulations. **Works standalone as a results viewer** — no simulator
 required to open and analyze results.
 
+## Screenshots
+![Map & result (Japan S7)](docs/TsunamiSimulatorUI_MapAndResult_ResultS7.png)
+
+More in [`docs/`](docs/): bathymetry view, closer result, parameters, and the simulation tab.
+
 ## Place in the NskTSH ecosystem
 - Depends on [`tsunami-core`](https://github.com/NskTSH/tsunami-core) — header-only
   I/O foundation (parsers/formats/params/coord/sources). **Sibling repo** by workspace convention.
