@@ -24,6 +24,7 @@ public:
     void setGradient(GradientEditor* gradient);
     void setTileProvider(TileProvider* provider);
     void setParameterSet(ParameterSet* params);
+    void setSelectedRegion(const QRectF &rect);
 
     // Rebuild the raster image from grid data + gradient
     void rebuildRaster();
@@ -87,6 +88,7 @@ private:
     GradientEditor* gradient_ = nullptr;
     TileProvider* tileProvider_ = nullptr;
     ParameterSet* params_ = nullptr;
+    QGraphicsRectItem* selectionRectItem_ = nullptr;
 
     QImage overlayImage_;
     bool hasOverlay_ = false;

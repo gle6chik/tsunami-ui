@@ -121,10 +121,12 @@ void GridViewerWidget::setupUI()
         int cMin = static_cast<int>(std::min(lastRubberFrom_.x(), lastRubberTo_.x()));
         int cMax = static_cast<int>(std::max(lastRubberFrom_.x(), lastRubberTo_.x()));
 
-        if (rMin == rMax || cMin == cMax) {
+        if (cMin == cMax || rMin == rMax) {
             return;
         }
 
+        QRectF rect(cMin, rMin, cMax - cMin, rMax - rMin);
+        scene_->setSelectedRegion(rect);
         coastTool_->setRegion(rMin, rMax, cMin, cMax);
     };
 

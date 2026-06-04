@@ -500,3 +500,15 @@ void GridScene::setShowSubgridLines(bool show) { showSubgrids_ = show; rebuildRa
 void GridScene::setShowSources(bool show) { showSources_ = show; rebuildRaster(); }
 void GridScene::setShowBathIsolines(bool show) { showBathIso_ = show; rebuildRaster(); }
 void GridScene::setShowOverlayIsolines(bool show) { showOverlayIso_ = show; rebuildRaster(); }
+
+void GridScene::setSelectedRegion(const QRectF &rect) {
+    if (selectionRectItem_) {
+        removeItem(selectionRectItem_);
+        delete selectionRectItem_;
+        selectionRectItem_ = nullptr;
+    }
+
+    QPen pen(Qt::red, 2, Qt::SolidLine);
+    selectionRectItem_ = addRect(rect, pen);
+    selectionRectItem_->setZValue(100);
+}
