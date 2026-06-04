@@ -44,7 +44,7 @@ public:
     using QGraphicsView::QGraphicsView;
     std::function<void(QPointF)> onMouseMove;
     std::function<void()> onRubberBandFinished;
-    std::function<void()> onMouseClick;
+    std::function<void(QPointF)> onMouseClick;
 
 protected:
     void mousePressEvent(QMouseEvent* event) override {
@@ -71,7 +71,7 @@ protected:
         if (wasRubberBand && onRubberBandFinished)
             onRubberBandFinished();
         else if (onMouseClick)
-            onMouseClick(); // mapToScene(event->pos())
+            onMouseClick(mapToScene(event->pos()));
 
         mousePressed_ = false;
         mouseMoved_ = false;
@@ -153,7 +153,18 @@ void GridViewerWidget::setupUI()
         coastTool_->setRegion(rMin, rMax, cMin, cMax);
     };
 
-    trackView->onMouseClick = [this]() {
+    // Click outside the selected area to deselect
+    trackView->onMouseClick = [this, trackView](QPointF pos) {
+        if (trackView->dragMode() != QGraphicsView::RubberBandDrag)
+            return;
+
+        if (!scene_->hasSelectedRegion())
+            return;
+
+        QRectF selectionRect = scene_->selectionRegion();
+        if (selectionRect.contains(pos))
+            return;
+
         clearSelection();
     };
 

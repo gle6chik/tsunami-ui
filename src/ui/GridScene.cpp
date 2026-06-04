@@ -521,3 +521,11 @@ void GridScene::clearSelectionRegion() {
     selectionRectItem_ = nullptr;
     update();
 }
+
+bool GridScene::hasSelectedRegion() { return selectionRectItem_ != nullptr; }
+
+QRectF GridScene::selectionRegion() {
+    if (selectionRectItem_)
+        return selectionRectItem_->rect();
+    return QRectF();
+}
