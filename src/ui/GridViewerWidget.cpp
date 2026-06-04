@@ -36,13 +36,26 @@
 // Custom view with mouse tracking, wheel zoom, and rubber band finish callback
 class TrackingGraphicsView : public QGraphicsView
 {
+private:
+    bool mousePressed_ = false;
+    bool mouseMoved_ = false;
+
 public:
     using QGraphicsView::QGraphicsView;
     std::function<void(QPointF)> onMouseMove;
     std::function<void()> onRubberBandFinished;
+    std::function<void()> onMouseClick;
 
 protected:
+    void mousePressEvent(QMouseEvent* event) override {
+        mousePressed_ = true;
+        mouseMoved_ = false;
+        QGraphicsView::mousePressEvent(event);
+    }
+
     void mouseMoveEvent(QMouseEvent* event) override {
+        if (mousePressed_)
+            mouseMoved_ = true;
         QGraphicsView::mouseMoveEvent(event);
         if (onMouseMove)
             onMouseMove(mapToScene(event->pos()));
@@ -50,8 +63,18 @@ protected:
 
     void mouseReleaseEvent(QMouseEvent* event) override {
         QGraphicsView::mouseReleaseEvent(event);
-        if (dragMode() == QGraphicsView::RubberBandDrag && onRubberBandFinished)
+
+        bool wasRubberBand = (dragMode() == QGraphicsView::RubberBandDrag &&
+                              mousePressed_ &&
+                              mouseMoved_);
+
+        if (wasRubberBand && onRubberBandFinished)
             onRubberBandFinished();
+        else if (onMouseClick)
+            onMouseClick(); // mapToScene(event->pos())
+
+        mousePressed_ = false;
+        mouseMoved_ = false;
     }
 
     void wheelEvent(QWheelEvent* event) override {
@@ -128,6 +151,10 @@ void GridViewerWidget::setupUI()
         QRectF rect(cMin, rMin, cMax - cMin, rMax - rMin);
         scene_->setSelectedRegion(rect);
         coastTool_->setRegion(rMin, rMax, cMin, cMax);
+    };
+
+    trackView->onMouseClick = [this]() {
+        clearSelection();
     };
 
     mapRow->addWidget(view_, 1);
@@ -663,4 +690,12 @@ void GridViewerWidget::updateStatusLabel(QPointF scenePos)
 
     emit cellHovered(row, col, depth);
     coordLabel_->setText(text);
+}
+
+void GridViewerWidget::clearSelection() {
+    if (scene_)
+        scene_->clearSelectionRegion();
+
+    if (coastTool_)
+        coastTool_->clearRegion();
 }

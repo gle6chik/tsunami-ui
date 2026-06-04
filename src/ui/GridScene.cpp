@@ -512,3 +512,12 @@ void GridScene::setSelectedRegion(const QRectF &rect) {
     selectionRectItem_ = addRect(rect, pen);
     selectionRectItem_->setZValue(100);
 }
+
+void GridScene::clearSelectionRegion() {
+    if (selectionRectItem_) {
+        removeItem(selectionRectItem_);
+    }
+    delete selectionRectItem_;
+    selectionRectItem_ = nullptr;
+    update();
+}

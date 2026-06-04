@@ -21,6 +21,8 @@ public:
     void setRegion(int rowMin, int rowMax, int colMin, int colMax);
     void setEtaMaxData(const std::vector<double>& etaMax, int rows, int cols);
 
+    void clearRegion();
+
     void recompute();
 
 signals:

@@ -24,7 +24,10 @@ public:
     void setGradient(GradientEditor* gradient);
     void setTileProvider(TileProvider* provider);
     void setParameterSet(ParameterSet* params);
+
+    // Selection region
     void setSelectedRegion(const QRectF &rect);
+    void clearSelectionRegion();
 
     // Rebuild the raster image from grid data + gradient
     void rebuildRaster();

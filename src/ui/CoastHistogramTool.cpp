@@ -31,6 +31,13 @@ void CoastHistogramTool::setRegion(int rowMin, int rowMax, int colMin, int colMa
     recompute();
 }
 
+void CoastHistogramTool::clearRegion() {
+    regionRowMin_ = 0;
+    regionRowMax_ = 0;
+    regionColMin_ = 0;
+    regionColMax_ = 0;
+}
+
 void CoastHistogramTool::setEtaMaxData(const std::vector<double>& etaMax, int rows, int cols)
 {
     etaMaxData_ = etaMax;
