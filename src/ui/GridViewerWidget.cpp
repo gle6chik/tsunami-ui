@@ -144,8 +144,18 @@ void GridViewerWidget::setupUI()
         int cMin = static_cast<int>(std::min(lastRubberFrom_.x(), lastRubberTo_.x()));
         int cMax = static_cast<int>(std::max(lastRubberFrom_.x(), lastRubberTo_.x()));
 
-        if (cMin == cMax || rMin == rMax) {
-            return;
+        if (cMin == cMax || rMin == rMax) return;
+
+        if (grid_ && grid_->isLoaded()) {
+            int rows = grid_->rows();
+            int cols = grid_->cols();
+
+            rMin = std::max(0, std::min(rMin, rows - 1));
+            rMax = std::max(0, std::min(rMax, rows - 1));
+            cMin = std::max(0, std::min(cMin, cols - 1));
+            cMax = std::max(0, std::min(cMax, cols - 1));
+
+            if (cMin == cMax || rMin == rMax) return;
         }
 
         QRectF rect(cMin, rMin, cMax - cMin, rMax - rMin);
