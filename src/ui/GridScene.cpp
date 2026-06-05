@@ -50,8 +50,13 @@ void GridScene::setParameterSet(ParameterSet* params)
 
 void GridScene::rebuildRaster()
 {
+    QRectF savedSelectionRect;
+    if (selectionRectItem_)
+        savedSelectionRect = selectionRectItem_->rect();
+
     clear();
     mapTileItems_.clear();
+    selectionRectItem_ = nullptr;
 
     if (!gradient_) return;
 
@@ -97,6 +102,11 @@ void GridScene::rebuildRaster()
     // Layer 30: Source ellipses
     if (showSources_ && params_)
         renderSourceEllipses();
+
+    if (!savedSelectionRect.isNull() &&
+        savedSelectionRect.width() > 0 &&
+        savedSelectionRect.height() > 0)
+        setSelectedRegion(savedSelectionRect);
 }
 
 void GridScene::renderBathymetryTiles()
