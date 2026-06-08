@@ -51,8 +51,9 @@ void GridScene::setParameterSet(ParameterSet* params)
 void GridScene::rebuildRaster()
 {
     QRectF savedSelectionRect;
-    if (selectionRectItem_)
+    if (selectionRectItem_) {
         savedSelectionRect = selectionRectItem_->rect();
+    }
 
     clear();
     mapTileItems_.clear();
@@ -106,7 +107,9 @@ void GridScene::rebuildRaster()
     if (!savedSelectionRect.isNull() &&
         savedSelectionRect.width() > 0 &&
         savedSelectionRect.height() > 0)
+    {
         setSelectedRegion(savedSelectionRect);
+    }
 }
 
 void GridScene::renderBathymetryTiles()
@@ -535,7 +538,8 @@ void GridScene::clearSelectionRegion() {
 bool GridScene::hasSelectedRegion() { return selectionRectItem_ != nullptr; }
 
 QRectF GridScene::selectionRegion() {
-    if (selectionRectItem_)
+    if (selectionRectItem_) {
         return selectionRectItem_->rect();
+    }
     return QRectF();
 }

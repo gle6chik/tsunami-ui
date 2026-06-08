@@ -54,11 +54,14 @@ protected:
     }
 
     void mouseMoveEvent(QMouseEvent* event) override {
-        if (mousePressed_)
+        if (mousePressed_) {
             mouseMoved_ = true;
+        }
+
         QGraphicsView::mouseMoveEvent(event);
-        if (onMouseMove)
+        if (onMouseMove) {
             onMouseMove(mapToScene(event->pos()));
+        }
     }
 
     void mouseReleaseEvent(QMouseEvent* event) override {
@@ -68,10 +71,12 @@ protected:
                               mousePressed_ &&
                               mouseMoved_);
 
-        if (wasRubberBand && onRubberBandFinished)
+        if (wasRubberBand && onRubberBandFinished) {
             onRubberBandFinished();
-        else if (onMouseClick)
+        }
+        else if (onMouseClick) {
             onMouseClick(mapToScene(event->pos()));
+        }
 
         mousePressed_ = false;
         mouseMoved_ = false;
@@ -139,7 +144,9 @@ void GridViewerWidget::setupUI()
     // When rubber band finished, send region to coast tool
     trackView->onRubberBandFinished = [this]() {
         if (grid_ && grid_->isLoaded()) {
-            if (lastRubberFrom_.isNull() && lastRubberTo_.isNull()) return;
+            if (lastRubberFrom_.isNull() && lastRubberTo_.isNull()) {
+                return;
+            }
             int rMin = static_cast<int>(std::min(lastRubberFrom_.y(), lastRubberTo_.y()));
             int rMax = static_cast<int>(std::max(lastRubberFrom_.y(), lastRubberTo_.y()));
             int cMin = static_cast<int>(std::min(lastRubberFrom_.x(), lastRubberTo_.x()));
@@ -152,7 +159,9 @@ void GridViewerWidget::setupUI()
             cMin = std::max(0, std::min(cMin, cols - 1));
             cMax = std::max(0, std::min(cMax, cols - 1));
 
-            if (cMin == cMax || rMin == rMax) return;
+            if (cMin == cMax || rMin == rMax) {
+                return;
+            }
 
             QRectF rect(cMin, rMin, cMax - cMin, rMax - rMin);
             scene_->setSelectedRegion(rect);
@@ -162,15 +171,18 @@ void GridViewerWidget::setupUI()
 
     // Click outside the selected area to deselect
     trackView->onMouseClick = [this, trackView](QPointF pos) {
-        if (trackView->dragMode() != QGraphicsView::RubberBandDrag)
+        if (trackView->dragMode() != QGraphicsView::RubberBandDrag) {
             return;
+        }
 
-        if (!scene_->hasSelectedRegion())
+        if (!scene_->hasSelectedRegion()) {
             return;
+        }
 
         QRectF selectionRect = scene_->selectionRegion();
-        if (selectionRect.contains(pos))
+        if (selectionRect.contains(pos)) {
             return;
+        }
 
         clearSelection();
     };
@@ -711,9 +723,11 @@ void GridViewerWidget::updateStatusLabel(QPointF scenePos)
 }
 
 void GridViewerWidget::clearSelection() {
-    if (scene_)
+    if (scene_) {
         scene_->clearSelectionRegion();
+    }
 
-    if (coastTool_)
+    if (coastTool_) {
         coastTool_->clearRegion();
+    }
 }
