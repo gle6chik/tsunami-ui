@@ -120,6 +120,11 @@ void GridViewerWidget::setupUI()
         int rMax = static_cast<int>(std::max(lastRubberFrom_.y(), lastRubberTo_.y()));
         int cMin = static_cast<int>(std::min(lastRubberFrom_.x(), lastRubberTo_.x()));
         int cMax = static_cast<int>(std::max(lastRubberFrom_.x(), lastRubberTo_.x()));
+
+        if (rMin == rMax || cMin == cMax) {
+            return;
+        }
+
         coastTool_->setRegion(rMin, rMax, cMin, cMax);
     };
 
