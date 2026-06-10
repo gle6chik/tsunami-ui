@@ -593,6 +593,7 @@ void GridViewerWidget::onLayerTreeContextMenu(QPoint pos)
 
 void GridViewerWidget::setGridDataset(GridDataset* grid, const QString& filename)
 {
+    clearSelection();
     grid_ = grid;
     scene_->setGridDataset(grid);
     profileTool_->setGridDataset(grid);

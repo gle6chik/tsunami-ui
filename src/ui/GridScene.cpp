@@ -524,8 +524,8 @@ void GridScene::setSelectedRegion(const QRectF &rect) {
     QPen pen(Qt::red, 2, Qt::SolidLine);
     selectionRectItem_ = addRect(rect, pen);
 
-    const int Z_VALUE_FOR_SELECTIION = 100;
-    selectionRectItem_->setZValue(Z_VALUE_FOR_SELECTIION);
+    const int Z_VALUE_FOR_SELECTION = 100;
+    selectionRectItem_->setZValue(Z_VALUE_FOR_SELECTION);
 
     update();
 }
