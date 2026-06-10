@@ -163,7 +163,7 @@ void GridViewerWidget::setupUI()
                 return;
             }
 
-            QRectF rect(cMin, rMin, cMax - cMin, rMax - rMin);
+            QRectF rect(cMin, rMin, cMax - cMin + 1, rMax - rMin + 1);
             scene_->setSelectedRegion(rect);
             coastTool_->setRegion(rMin, rMax, cMin, cMax);
         }
