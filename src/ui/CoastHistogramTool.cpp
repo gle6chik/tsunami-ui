@@ -28,14 +28,13 @@ void CoastHistogramTool::setRegion(int rowMin, int rowMax, int colMin, int colMa
     regionRowMax_ = rowMax;
     regionColMin_ = colMin;
     regionColMax_ = colMax;
+    hasRegion_ = true;
     recompute();
 }
 
 void CoastHistogramTool::clearRegion() {
-    regionRowMin_ = 0;
-    regionRowMax_ = 0;
-    regionColMin_ = 0;
-    regionColMax_ = 0;
+    hasRegion_ = false;
+    recompute();
 }
 
 void CoastHistogramTool::setEtaMaxData(const std::vector<double>& etaMax, int rows, int cols)
@@ -55,7 +54,7 @@ void CoastHistogramTool::recompute()
 std::vector<CoastHistogramTool::CoastNode> CoastHistogramTool::findCoastNodes()
 {
     std::vector<CoastNode> nodes;
-    if (!grid_ || !grid_->isLoaded() || etaMaxData_.empty())
+    if (!hasRegion_ || !grid_ || !grid_->isLoaded() || etaMaxData_.empty())
         return nodes;
 
     int rows = grid_->rows();

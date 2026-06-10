@@ -45,6 +45,7 @@ private:
     int etaCols_ = 0;
     double minDepth_ = 7.0;
 
+    bool hasRegion_ = false;
     int regionRowMin_ = 0, regionRowMax_ = 0;
     int regionColMin_ = 0, regionColMax_ = 0;
 
