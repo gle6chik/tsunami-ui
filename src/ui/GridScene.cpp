@@ -523,7 +523,11 @@ void GridScene::setSelectedRegion(const QRectF &rect) {
 
     QPen pen(Qt::red, 2, Qt::SolidLine);
     selectionRectItem_ = addRect(rect, pen);
-    selectionRectItem_->setZValue(100);
+
+    const int Z_VALUE_FOR_SELECTIION = 100;
+    selectionRectItem_->setZValue(Z_VALUE_FOR_SELECTIION);
+
+    update();
 }
 
 void GridScene::clearSelectionRegion() {
@@ -535,9 +539,9 @@ void GridScene::clearSelectionRegion() {
     update();
 }
 
-bool GridScene::hasSelectedRegion() { return selectionRectItem_ != nullptr; }
+bool GridScene::hasSelectedRegion() const { return selectionRectItem_ != nullptr; }
 
-QRectF GridScene::selectionRegion() {
+QRectF GridScene::selectionRegion() const {
     if (selectionRectItem_) {
         return selectionRectItem_->rect();
     }

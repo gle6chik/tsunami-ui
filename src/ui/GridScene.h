@@ -28,8 +28,8 @@ public:
     // Selection region
     void setSelectedRegion(const QRectF &rect);
     void clearSelectionRegion();
-    bool hasSelectedRegion();
-    QRectF selectionRegion();
+    bool hasSelectedRegion() const;
+    QRectF selectionRegion() const;
 
     // Rebuild the raster image from grid data + gradient
     void rebuildRaster();
