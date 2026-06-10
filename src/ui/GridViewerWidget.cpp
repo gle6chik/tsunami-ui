@@ -32,6 +32,7 @@
 #include <QMouseEvent>
 #include <QtConcurrent/QtConcurrentRun>
 #include <QWheelEvent>
+#include <QApplication>
 
 // Custom view with mouse tracking, wheel zoom, and rubber band finish callback
 class TrackingGraphicsView : public QGraphicsView
@@ -39,6 +40,7 @@ class TrackingGraphicsView : public QGraphicsView
 private:
     bool mousePressed_ = false;
     bool mouseMoved_ = false;
+    QPoint pressPos_;
 
 public:
     using QGraphicsView::QGraphicsView;
@@ -50,12 +52,16 @@ protected:
     void mousePressEvent(QMouseEvent* event) override {
         mousePressed_ = true;
         mouseMoved_ = false;
+        pressPos_ = event->pos();
         QGraphicsView::mousePressEvent(event);
     }
 
     void mouseMoveEvent(QMouseEvent* event) override {
-        if (mousePressed_) {
-            mouseMoved_ = true;
+        if (mousePressed_ && !mouseMoved_) {
+            int distance = (event->pos() - pressPos_).manhattanLength();
+            if (distance > QApplication::startDragDistance()) {
+                mouseMoved_ = true;
+            }
         }
 
         QGraphicsView::mouseMoveEvent(event);
