@@ -67,6 +67,12 @@ protected:
     void mouseReleaseEvent(QMouseEvent* event) override {
         QGraphicsView::mouseReleaseEvent(event);
 
+        if (!(event->button() == Qt::LeftButton)) {
+            mousePressed_ = false;
+            mouseMoved_ = false;
+            return;
+        }
+
         bool wasRubberBand = (dragMode() == QGraphicsView::RubberBandDrag &&
                               mousePressed_ &&
                               mouseMoved_);
@@ -77,9 +83,6 @@ protected:
         else if (onMouseClick) {
             onMouseClick(mapToScene(event->pos()));
         }
-
-        mousePressed_ = false;
-        mouseMoved_ = false;
     }
 
     void wheelEvent(QWheelEvent* event) override {
