@@ -571,4 +571,15 @@ void GridScene::setCoastlineCells(const QVector<QPointF> &cells) {
 
         coastlineCells_.append(rect);
     }
+
+    update();
+}
+
+void GridScene::clearCoastlineCells() {
+    for (auto* item : coastlineCells_) {
+        removeItem(item);
+        delete item;
+    }
+    coastlineCells_.clear();
+    update();
 }
