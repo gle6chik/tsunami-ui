@@ -96,6 +96,12 @@ std::vector<CoastHistogramTool::CoastNode> CoastHistogramTool::findCoastNodes()
         }
     }
 
+    QVector<QPointF> points;
+    for (const auto& node : nodes) {
+        points.append(QPointF(node.col, node.row));
+    }
+    emit coastlineCellsCalculated(points);
+
     return nodes;
 }
 

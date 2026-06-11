@@ -27,6 +27,7 @@ public:
 
 signals:
     void regionSelected(int rowMin, int rowMax, int colMin, int colMax);
+    void coastlineCellsCalculated(const QVector<QPointF>& cells);
 
 protected:
     void paintEvent(QPaintEvent* event) override;

@@ -547,3 +547,28 @@ QRectF GridScene::selectionRegion() const {
     }
     return QRectF();
 }
+
+void GridScene::setCoastlineCells(const QVector<QPointF> &cells) {
+    for (auto* item : coastlineCells_) {
+        removeItem(item);
+        delete item;
+    }
+    coastlineCells_.clear();
+
+    if (cells.isEmpty()) {
+        return;
+    }
+
+    QBrush brush(Qt::red);
+    QPen pen(Qt::NoPen);
+
+    for (const QPointF& cell : cells) {
+        const qreal CELL_SIDE_SIZE = 1.0;
+        QGraphicsRectItem* rect = addRect(cell.x(), cell.y(), CELL_SIDE_SIZE, CELL_SIDE_SIZE, pen, brush);
+
+        const int Z_VALUE_FOR_COASTLINE = 99;
+        rect->setZValue(Z_VALUE_FOR_COASTLINE);
+
+        coastlineCells_.append(rect);
+    }
+}
