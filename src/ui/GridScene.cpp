@@ -50,8 +50,14 @@ void GridScene::setParameterSet(ParameterSet* params)
 
 void GridScene::rebuildRaster()
 {
+    QRectF savedSelectionRect;
+    if (selectionRectItem_) {
+        savedSelectionRect = selectionRectItem_->rect();
+    }
+
     clear();
     mapTileItems_.clear();
+    selectionRectItem_ = nullptr;
 
     if (!gradient_) return;
 
@@ -97,6 +103,13 @@ void GridScene::rebuildRaster()
     // Layer 30: Source ellipses
     if (showSources_ && params_)
         renderSourceEllipses();
+
+    if (!savedSelectionRect.isNull() &&
+        savedSelectionRect.width() > 0 &&
+        savedSelectionRect.height() > 0)
+    {
+        setSelectedRegion(savedSelectionRect);
+    }
 }
 
 void GridScene::renderBathymetryTiles()
@@ -500,3 +513,37 @@ void GridScene::setShowSubgridLines(bool show) { showSubgrids_ = show; rebuildRa
 void GridScene::setShowSources(bool show) { showSources_ = show; rebuildRaster(); }
 void GridScene::setShowBathIsolines(bool show) { showBathIso_ = show; rebuildRaster(); }
 void GridScene::setShowOverlayIsolines(bool show) { showOverlayIso_ = show; rebuildRaster(); }
+
+void GridScene::setSelectedRegion(const QRectF &rect) {
+    if (selectionRectItem_) {
+        removeItem(selectionRectItem_);
+        delete selectionRectItem_;
+        selectionRectItem_ = nullptr;
+    }
+
+    QPen pen(Qt::red, 2, Qt::SolidLine);
+    selectionRectItem_ = addRect(rect, pen);
+
+    const int Z_VALUE_FOR_SELECTION = 100;
+    selectionRectItem_->setZValue(Z_VALUE_FOR_SELECTION);
+
+    update();
+}
+
+void GridScene::clearSelectionRegion() {
+    if (selectionRectItem_) {
+        removeItem(selectionRectItem_);
+    }
+    delete selectionRectItem_;
+    selectionRectItem_ = nullptr;
+    update();
+}
+
+bool GridScene::hasSelectedRegion() const { return selectionRectItem_ != nullptr; }
+
+QRectF GridScene::selectionRegion() const {
+    if (selectionRectItem_) {
+        return selectionRectItem_->rect();
+    }
+    return QRectF();
+}
