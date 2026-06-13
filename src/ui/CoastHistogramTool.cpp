@@ -106,7 +106,7 @@ std::vector<CoastHistogramTool::CoastNode> CoastHistogramTool::findCoastNodes()
     for (const auto& node : nodes) {
         points.append(QPointF(node.col, node.row));
     }
-    emit coastlineCellsCalculated(points);
+    emit coastlineCellsCalculated(points, isCoastlineVisible_);
 
     return nodes;
 }
@@ -153,5 +153,6 @@ void CoastHistogramTool::paintEvent(QPaintEvent*)
 }
 
 void CoastHistogramTool::onShowCoastlineToggled(bool state) {
+    isCoastlineVisible_ = state;
     emit showCoastlineChanged(state);
 }

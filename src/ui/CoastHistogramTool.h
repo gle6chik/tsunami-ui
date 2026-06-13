@@ -28,7 +28,7 @@ public:
 
 signals:
     void regionSelected(int rowMin, int rowMax, int colMin, int colMax);
-    void coastlineCellsCalculated(const QVector<QPointF>& cells);
+    void coastlineCellsCalculated(const QVector<QPointF>& cells, bool visible);
     void showCoastlineChanged(bool visible);
 
 private slots:
@@ -59,4 +59,5 @@ private:
     QLabel* infoLabel_ = nullptr;
 
     QCheckBox* showCoastlineCheckBox_ = nullptr;
+    bool isCoastlineVisible_ = true;
 };
