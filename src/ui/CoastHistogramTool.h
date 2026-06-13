@@ -2,6 +2,7 @@
 
 #include <QWidget>
 #include <vector>
+#include <QCheckBox>
 
 class QLabel;
 class GridDataset;
@@ -27,6 +28,11 @@ public:
 
 signals:
     void regionSelected(int rowMin, int rowMax, int colMin, int colMax);
+    void coastlineCellsCalculated(const QVector<QPointF>& cells, bool visible);
+    void showCoastlineChanged(bool visible);
+
+private slots:
+    void onShowCoastlineToggled(bool state);
 
 protected:
     void paintEvent(QPaintEvent* event) override;
@@ -51,4 +57,7 @@ private:
 
     std::vector<CoastNode> coastNodes_;
     QLabel* infoLabel_ = nullptr;
+
+    QCheckBox* showCoastlineCheckBox_ = nullptr;
+    bool isCoastlineVisible_ = true;
 };

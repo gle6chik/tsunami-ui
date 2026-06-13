@@ -221,6 +221,19 @@ void GridViewerWidget::setupUI()
     coastTool_ = new CoastHistogramTool(this);
     analysisTabs->addTab(coastTool_, tr("Coast"));
 
+    connect(coastTool_, &CoastHistogramTool::coastlineCellsCalculated, this, [this](const QVector<QPointF>& points, bool visible) {
+        if (scene_) {
+            scene_->setCoastlineCells(points);
+            scene_->setCoastlineVisible(visible);
+        }
+    });
+
+    connect(coastTool_, &CoastHistogramTool::showCoastlineChanged, this, [this](bool visible) {
+        if (scene_) {
+            scene_->setCoastlineVisible(visible);
+        }
+    });
+
     splitter->addWidget(analysisTabs);
 
     // Panel 0 (layer tree): collapsible, compact
@@ -735,6 +748,7 @@ void GridViewerWidget::updateStatusLabel(QPointF scenePos)
 void GridViewerWidget::clearSelection() {
     if (scene_) {
         scene_->clearSelectionRegion();
+        scene_->clearCoastlineCells();
     }
 
     if (coastTool_) {

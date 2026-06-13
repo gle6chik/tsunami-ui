@@ -30,6 +30,9 @@ public:
     void clearSelectionRegion();
     bool hasSelectedRegion() const;
     QRectF selectionRegion() const;
+    void setCoastlineCells(const QVector<QPointF>& cells);
+    void clearCoastlineCells();
+    void setCoastlineVisible(bool visible);
 
     // Rebuild the raster image from grid data + gradient
     void rebuildRaster();
@@ -94,6 +97,7 @@ private:
     TileProvider* tileProvider_ = nullptr;
     ParameterSet* params_ = nullptr;
     QGraphicsRectItem* selectionRectItem_ = nullptr;
+    QVector<QGraphicsRectItem*> coastlineCells_;
 
     QImage overlayImage_;
     bool hasOverlay_ = false;
