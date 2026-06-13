@@ -32,6 +32,7 @@ public:
     QRectF selectionRegion() const;
     void setCoastlineCells(const QVector<QPointF>& cells);
     void clearCoastlineCells();
+    void setCoastlineVisible(bool visible);
 
     // Rebuild the raster image from grid data + gradient
     void rebuildRaster();

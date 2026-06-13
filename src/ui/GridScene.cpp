@@ -583,3 +583,9 @@ void GridScene::clearCoastlineCells() {
     coastlineCells_.clear();
     update();
 }
+
+void GridScene::setCoastlineVisible(bool visible) {
+    for (auto* item : coastlineCells_) {
+        item->setVisible(visible);
+    }
+}

@@ -11,6 +11,12 @@ CoastHistogramTool::CoastHistogramTool(QWidget* parent)
     : QWidget(parent)
 {
     auto* layout = new QVBoxLayout(this);
+
+    showCoastlineCheckBox_ = new QCheckBox(tr("Show coastline"), this);
+    showCoastlineCheckBox_->setChecked(true);
+    layout->addWidget(showCoastlineCheckBox_);
+    connect(showCoastlineCheckBox_, &QCheckBox::toggled, this, &CoastHistogramTool::onShowCoastlineToggled);
+
     infoLabel_ = new QLabel(tr("Select a region on the grid to see coastline wave heights."));
     layout->addWidget(infoLabel_);
     layout->addStretch();
@@ -144,4 +150,8 @@ void CoastHistogramTool::paintEvent(QPaintEvent*)
     p.drawText(chartRect.topLeft() + QPoint(-25, 10),
                QString::number(maxEta, 'f', 1) + " m");
     p.drawText(chartRect.bottomLeft() + QPoint(-10, 15), "0");
+}
+
+void CoastHistogramTool::onShowCoastlineToggled(bool state) {
+    emit showCoastlineChanged(state);
 }

@@ -227,6 +227,12 @@ void GridViewerWidget::setupUI()
         }
     });
 
+    connect(coastTool_, &CoastHistogramTool::showCoastlineChanged, this, [this](bool visible) {
+        if (scene_) {
+            scene_->setCoastlineVisible(visible);
+        }
+    });
+
     splitter->addWidget(analysisTabs);
 
     // Panel 0 (layer tree): collapsible, compact
