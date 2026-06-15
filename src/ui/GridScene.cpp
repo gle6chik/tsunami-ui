@@ -576,6 +576,7 @@ void GridScene::setCoastlineCells(const QVector<QPointF> &cells) {
 
     QBrush brush(Qt::red);
     QPen pen(Qt::red, 1, Qt::SolidLine);
+    pen.setCosmetic(true);
 
     for (const QPointF& cell : cells) {
         const qreal CELL_SIDE_SIZE = 1.0;
