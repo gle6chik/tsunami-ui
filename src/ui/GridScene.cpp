@@ -55,9 +55,17 @@ void GridScene::rebuildRaster()
         savedSelectionRect = selectionRectItem_->rect();
     }
 
+    QVector<QPointF> savedCoastlineSelection;
+    if (!coastlineCells_.isEmpty()) {
+        for (const auto* item : coastlineCells_) {
+            savedCoastlineSelection.append(item->rect().topLeft());
+        }
+    }
+
     clear();
     mapTileItems_.clear();
     selectionRectItem_ = nullptr;
+    coastlineCells_.clear();
 
     if (!gradient_) return;
 
@@ -109,6 +117,10 @@ void GridScene::rebuildRaster()
         savedSelectionRect.height() > 0)
     {
         setSelectedRegion(savedSelectionRect);
+    }
+
+    if (!savedCoastlineSelection.isEmpty()) {
+        setCoastlineCells(savedCoastlineSelection);
     }
 }
 
@@ -546,4 +558,45 @@ QRectF GridScene::selectionRegion() const {
         return selectionRectItem_->rect();
     }
     return QRectF();
+}
+
+void GridScene::setCoastlineCells(const QVector<QPointF> &cells) {
+    for (auto* item : coastlineCells_) {
+        removeItem(item);
+        delete item;
+    }
+    coastlineCells_.clear();
+
+    if (cells.isEmpty()) {
+        return;
+    }
+
+    QBrush brush(Qt::red);
+    QPen pen(Qt::red, 1, Qt::SolidLine);
+    pen.setCosmetic(true);
+
+    for (const QPointF& cell : cells) {
+        const qreal CELL_SIDE_SIZE = 1.0;
+        QGraphicsRectItem* rect = addRect(cell.x(), cell.y(), CELL_SIDE_SIZE, CELL_SIDE_SIZE, pen, brush);
+
+        const int Z_VALUE_FOR_COASTLINE = 99;
+        rect->setZValue(Z_VALUE_FOR_COASTLINE);
+
+        rect->setVisible(coastlineVisible_);
+
+        coastlineCells_.append(rect);
+    }
+
+    update();
+}
+
+void GridScene::setCoastlineVisible(bool visible) {
+    if (visible == coastlineVisible_) {
+        return;
+    }
+
+    coastlineVisible_ = visible;
+    for (auto* item : coastlineCells_) {
+        item->setVisible(coastlineVisible_);
+    }
 }

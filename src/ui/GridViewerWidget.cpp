@@ -221,6 +221,18 @@ void GridViewerWidget::setupUI()
     coastTool_ = new CoastHistogramTool(this);
     analysisTabs->addTab(coastTool_, tr("Coast"));
 
+    connect(coastTool_, &CoastHistogramTool::coastlineCellsCalculated, this, [this](const QVector<QPointF>& points) {
+        if (scene_) {
+            scene_->setCoastlineCells(points);
+        }
+    });
+
+    connect(coastTool_, &CoastHistogramTool::showCoastlineChanged, this, [this](bool visible) {
+        if (scene_) {
+            scene_->setCoastlineVisible(visible);
+        }
+    });
+
     splitter->addWidget(analysisTabs);
 
     // Panel 0 (layer tree): collapsible, compact
