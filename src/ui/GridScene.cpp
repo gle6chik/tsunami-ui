@@ -590,15 +590,6 @@ void GridScene::setCoastlineCells(const QVector<QPointF> &cells) {
     update();
 }
 
-void GridScene::clearCoastlineCells() {
-    for (auto* item : coastlineCells_) {
-        removeItem(item);
-        delete item;
-    }
-    coastlineCells_.clear();
-    update();
-}
-
 void GridScene::setCoastlineVisible(bool visible) {
     if (visible == coastlineVisible_) {
         return;
