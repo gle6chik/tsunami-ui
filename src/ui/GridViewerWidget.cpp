@@ -747,7 +747,6 @@ void GridViewerWidget::updateStatusLabel(QPointF scenePos)
 void GridViewerWidget::clearSelection() {
     if (scene_) {
         scene_->clearSelectionRegion();
-        scene_->clearCoastlineCells();
     }
 
     if (coastTool_) {

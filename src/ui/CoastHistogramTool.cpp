@@ -53,6 +53,13 @@ void CoastHistogramTool::setEtaMaxData(const std::vector<double>& etaMax, int ro
 void CoastHistogramTool::recompute()
 {
     coastNodes_ = findCoastNodes();
+
+    QVector<QPointF> points;
+    for (const auto& node : coastNodes_) {
+        points.append(QPointF(node.col, node.row));
+    }
+    emit coastlineCellsCalculated(points);
+
     infoLabel_->setText(tr("Coast nodes found: %1").arg(coastNodes_.size()));
     update();
 }
@@ -101,12 +108,6 @@ std::vector<CoastHistogramTool::CoastNode> CoastHistogramTool::findCoastNodes()
             }
         }
     }
-
-    QVector<QPointF> points;
-    for (const auto& node : nodes) {
-        points.append(QPointF(node.col, node.row));
-    }
-    emit coastlineCellsCalculated(points);
 
     return nodes;
 }
