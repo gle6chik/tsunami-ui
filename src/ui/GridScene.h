@@ -97,7 +97,9 @@ private:
     TileProvider* tileProvider_ = nullptr;
     ParameterSet* params_ = nullptr;
     QGraphicsRectItem* selectionRectItem_ = nullptr;
+
     QVector<QGraphicsRectItem*> coastlineCells_;
+    bool coastlineVisible_ = true;
 
     QImage overlayImage_;
     bool hasOverlay_ = false;

@@ -56,9 +56,7 @@ void GridScene::rebuildRaster()
     }
 
     QVector<QPointF> savedCoastlineSelection;
-    bool coastlineWasVisible = false;
     if (!coastlineCells_.isEmpty()) {
-        coastlineWasVisible = coastlineCells_.first()->isVisible();
         for (const auto* item : coastlineCells_) {
             savedCoastlineSelection.append(item->rect().topLeft());
         }
@@ -123,7 +121,6 @@ void GridScene::rebuildRaster()
 
     if (!savedCoastlineSelection.isEmpty()) {
         setCoastlineCells(savedCoastlineSelection);
-        setCoastlineVisible(coastlineWasVisible);
     }
 }
 
@@ -585,6 +582,8 @@ void GridScene::setCoastlineCells(const QVector<QPointF> &cells) {
         const int Z_VALUE_FOR_COASTLINE = 99;
         rect->setZValue(Z_VALUE_FOR_COASTLINE);
 
+        rect->setVisible(coastlineVisible_);
+
         coastlineCells_.append(rect);
     }
 
@@ -601,7 +600,12 @@ void GridScene::clearCoastlineCells() {
 }
 
 void GridScene::setCoastlineVisible(bool visible) {
+    if (visible == coastlineVisible_) {
+        return;
+    }
+
+    coastlineVisible_ = visible;
     for (auto* item : coastlineCells_) {
-        item->setVisible(visible);
+        item->setVisible(coastlineVisible_);
     }
 }
