@@ -6,6 +6,7 @@
 #include <QLabel>
 #include <algorithm>
 #include <cmath>
+#include <queue>
 
 CoastHistogramTool::CoastHistogramTool(QWidget* parent)
     : QWidget(parent)
@@ -64,6 +65,132 @@ void CoastHistogramTool::recompute()
     update();
 }
 
+std::vector<CoastHistogramTool::CoastNode> CoastHistogramTool::orderCoastNodes(const std::vector<CoastNode>& nodes)
+{
+    if (nodes.size() < 2) return nodes;
+
+    // Construction of an adjacency graph (8-connectedness)
+    auto areNeighbours8 = [](const CoastNode& n1, const CoastNode& n2) -> bool {
+        int dr = std::abs(n1.row - n2.row);
+        int dc = std::abs(n1.col - n2.col);
+        return (dr <= 1 && dc <= 1 && (dr + dc > 0));
+    };
+
+    std::vector<std::vector<int>> adj(nodes.size());
+    for (int i = 0; i < nodes.size(); ++i) {
+        for (int j = i + 1; j < nodes.size(); ++j) {
+            if (areNeighbours8(nodes[i], nodes[j])) {
+                adj[i].push_back(j);
+                adj[j].push_back(i);
+            }
+        }
+    }
+
+    // Finding all connected components
+    std::vector<bool> visited(nodes.size(), false);
+    std::vector<std::vector<int>> components;
+
+    for (int i = 0; i < nodes.size(); ++i) {
+        if (!visited[i]) {
+            std::vector<int> comp;
+            std::queue<int> q;
+            q.push(i);
+            visited[i] = true;
+            while (!q.empty()) {
+                int v = q.front(); q.pop();
+                comp.push_back(v);
+                for (int nb : adj[v]) {
+                    if (!visited[nb]) {
+                        visited[nb] = true;
+                        q.push(nb);
+                    }
+                }
+            }
+            components.push_back(comp);
+        }
+    }
+
+    std::vector<CoastNode> finalOrderedNodes;
+
+    // Finding the farthest node
+    auto findFarthestNode = [&](int startIdx, const std::vector<int> &comp, std::vector<int> &parent) -> int {
+        std::vector<bool> was_visited(nodes.size(), false);
+        std::queue<std::pair<int, int>> q; // Node - Distance from the start
+
+        // Start of traversal
+        was_visited[startIdx] = true;
+        parent[startIdx] = -1;
+        q.push({startIdx, 0});
+
+        // Traversal
+        int farthestNode = startIdx;
+        int maxDist = 0;
+        while (!q.empty()) {
+            auto [node, dist] = q.front();
+            q.pop();
+
+            if (dist > maxDist) {
+                maxDist = dist;
+                farthestNode = node;
+            }
+
+            for (int neighbour : adj[node]) {
+                if (was_visited[neighbour]) {
+                    continue;
+                }
+
+                if (std::find(comp.begin(), comp.end(), neighbour) == comp.end()) {
+                    continue;
+                }
+
+                was_visited[neighbour] = true;
+                parent[neighbour] = node;
+                q.push({neighbour, dist + 1});
+            }
+        }
+
+        return farthestNode;
+    };
+
+    // Building final path
+    auto constructPath = [](int start, int end, std::vector<int> &parent) -> std::vector<int> {
+        std::vector<int> path;
+        int current = end;
+
+        while (current != -1) {
+            path.push_back(current);
+            current = parent[current];
+        }
+
+        std::reverse(path.begin(), path.end());
+        return path;
+    };
+
+    // Ordering of nodes in each component
+    for (const auto& comp : components) {
+        // If the component is too small
+        const int MINIMUM_COMPONENT_SIZE = 5;
+        if (comp.size() < MINIMUM_COMPONENT_SIZE) {
+            continue;
+        }
+
+        int startPoint = comp[0];
+        std::vector<int> parent1(nodes.size(), -1);
+        int endpointA = findFarthestNode(startPoint, comp, parent1);
+
+        std::vector<int> parent2(nodes.size(), -1);
+        int endpointB = findFarthestNode(endpointA, comp, parent2);
+
+        std::vector<int> path = constructPath(endpointA, endpointB, parent2);
+
+        for (int idx : path) {
+            finalOrderedNodes.push_back(nodes[idx]);
+        }
+    }
+
+    return finalOrderedNodes;
+}
+
 std::vector<CoastHistogramTool::CoastNode> CoastHistogramTool::findCoastNodes()
 {
     std::vector<CoastNode> nodes;
@@ -79,8 +206,8 @@ std::vector<CoastHistogramTool::CoastNode> CoastHistogramTool::findCoastNodes()
     int cMin = std::max(0, regionColMin_);
     int cMax = std::min(cols - 1, regionColMax_);
 
-    static const int dr[] = {-1, 1, 0, 0};
-    static const int dc[] = {0, 0, -1, 1};
+    static const int dr[] = {-1, -1, -1, 0, 0, 1, 1, 1};
+    static const int dc[] = {-1, 0, 1, -1, 1, -1, 0, 1};
 
     for (int r = rMin; r <= rMax; ++r) {
         for (int c = cMin; c <= cMax; ++c) {
@@ -89,7 +216,7 @@ std::vector<CoastHistogramTool::CoastNode> CoastHistogramTool::findCoastNodes()
             if (depth < minDepth_) continue;
 
             bool adjacentToLand = false;
-            for (int d = 0; d < 4; ++d) {
+            for (int d = 0; d < 8; ++d) {
                 int nr = r + dr[d];
                 int nc = c + dc[d];
                 if (nr < 0 || nr >= rows || nc < 0 || nc >= cols) {
@@ -109,7 +236,7 @@ std::vector<CoastHistogramTool::CoastNode> CoastHistogramTool::findCoastNodes()
         }
     }
 
-    return nodes;
+    return orderCoastNodes(nodes);
 }
 
 void CoastHistogramTool::paintEvent(QPaintEvent*)

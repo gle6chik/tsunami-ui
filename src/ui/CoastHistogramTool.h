@@ -44,6 +44,7 @@ private:
     };
 
     std::vector<CoastNode> findCoastNodes();
+    std::vector<CoastNode> orderCoastNodes(const std::vector<CoastNode> &nodes);
 
     GridDataset* grid_ = nullptr;
     std::vector<double> etaMaxData_;
