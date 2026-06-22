@@ -7,6 +7,7 @@
 #include <algorithm>
 #include <cmath>
 #include <queue>
+#include <QDebug>
 
 CoastHistogramTool::CoastHistogramTool(QWidget* parent)
     : QWidget(parent)
@@ -183,6 +184,15 @@ std::vector<CoastHistogramTool::CoastNode> CoastHistogramTool::orderCoastNodes(c
 
         std::vector<int> path = constructPath(endpointA, endpointB, parent2);
 
+        // Add separator
+        if (!finalOrderedNodes.empty()) {
+            CoastNode separator;
+            separator.row = -1;
+            separator.col = -1;
+            separator.etaMax = -1.0;
+            finalOrderedNodes.push_back(separator);
+        }
+
         for (int idx : path) {
             finalOrderedNodes.push_back(nodes[idx]);
         }
@@ -255,8 +265,12 @@ void CoastHistogramTool::paintEvent(QPaintEvent*)
     if (chartRect.width() < 10 || chartRect.height() < 10) return;
 
     double maxEta = 0;
-    for (const auto& n : coastNodes_)
+    for (const auto& n : coastNodes_) {
+        if (n.row == -1 && n.col == -1) {
+            continue;
+        }
         maxEta = std::max(maxEta, std::abs(n.etaMax));
+    }
     if (maxEta < 1e-9) maxEta = 1.0;
 
     int barCount = static_cast<int>(coastNodes_.size());
@@ -267,8 +281,22 @@ void CoastHistogramTool::paintEvent(QPaintEvent*)
     p.drawLine(chartRect.bottomLeft(), chartRect.topLeft());
 
     for (int i = 0; i < barCount; ++i) {
+        const auto& node = coastNodes_[i];
+        double x = chartRect.left() + i * barWidth;
+
+        // Draw separator
+        if (node.etaMax < 0) {
+            p.save();
+            QPen separatorPen(Qt::red, 1, Qt::DashLine);
+            p.setPen(separatorPen);
+            double lineX = x + barWidth / 2.0;
+            p.drawLine(QPointF(lineX, chartRect.top()), QPointF(lineX, chartRect.bottom()));
+            p.restore();
+            continue;
+        }
+
         double h = (coastNodes_[i].etaMax / maxEta) * chartRect.height();
-        QRectF bar(chartRect.left() + i * barWidth, chartRect.bottom() - h,
+        QRectF bar(x, chartRect.bottom() - h,
                    barWidth * 0.8, h);
         p.fillRect(bar, QColor(0, 100, 200));
         p.drawRect(bar);
