@@ -233,6 +233,12 @@ void GridViewerWidget::setupUI()
         }
     });
 
+    connect(coastTool_, &CoastHistogramTool::coastlineLabelsReady, this, [this](const QMap<int, QPointF>& labels) {
+        if (scene_) {
+            scene_->setCoastlineLabels(labels);
+        }
+    });
+
     splitter->addWidget(analysisTabs);
 
     // Panel 0 (layer tree): collapsible, compact

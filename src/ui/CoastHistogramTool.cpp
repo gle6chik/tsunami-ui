@@ -62,6 +62,16 @@ void CoastHistogramTool::recompute()
     }
     emit coastlineCellsCalculated(points);
 
+    QMap<int, QPointF> labels;
+    int currentId = -1;
+    for (const auto& node : coastNodes_) {
+        if (node.componentId != currentId && node.componentId > 0) {
+            labels[node.componentId] = QPointF(node.col, node.row);
+            currentId = node.componentId;
+        }
+    }
+    emit coastlineLabelsReady(labels);
+
     infoLabel_->setText(tr("Coast nodes found: %1").arg(coastNodes_.size()));
     update();
 }
@@ -168,12 +178,15 @@ std::vector<CoastHistogramTool::CoastNode> CoastHistogramTool::orderCoastNodes(c
     };
 
     // Ordering of nodes in each component
+    int componentCounter = 0;
     for (const auto& comp : components) {
         // If the component is too small
         const int MINIMUM_COMPONENT_SIZE = 5;
         if (comp.size() < MINIMUM_COMPONENT_SIZE) {
             continue;
         }
+
+        componentCounter++;
 
         int startPoint = comp[0];
         std::vector<int> parent1(nodes.size(), -1);
@@ -194,7 +207,9 @@ std::vector<CoastHistogramTool::CoastNode> CoastHistogramTool::orderCoastNodes(c
         }
 
         for (int idx : path) {
-            finalOrderedNodes.push_back(nodes[idx]);
+            CoastNode node = nodes[idx];
+            node.componentId = componentCounter;
+            finalOrderedNodes.push_back(node);
         }
     }
 

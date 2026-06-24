@@ -30,6 +30,7 @@ signals:
     void regionSelected(int rowMin, int rowMax, int colMin, int colMax);
     void coastlineCellsCalculated(const QVector<QPointF>& cells);
     void showCoastlineChanged(bool visible);
+    void coastlineLabelsReady(const QMap<int, QPointF>& labels);
 
 private slots:
     void onShowCoastlineToggled(bool state);
@@ -41,6 +42,7 @@ private:
     struct CoastNode {
         int row, col;
         double etaMax;
+        int componentId = -1;
     };
 
     std::vector<CoastNode> findCoastNodes();
