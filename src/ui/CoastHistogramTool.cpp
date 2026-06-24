@@ -275,16 +275,18 @@ void CoastHistogramTool::paintEvent(QPaintEvent*)
     }
 
     // Draw bar chart
+    int topOffset = 50;
+    QRect chartArea = rect().adjusted(0, topOffset, 0, 0);
+
     int margin = 30;
-    QRect chartRect = rect().adjusted(margin, margin, -margin, -margin);
+    QRect chartRect = chartArea.adjusted(margin, margin, -margin, -margin);
     if (chartRect.width() < 10 || chartRect.height() < 10) return;
 
     double maxEta = 0;
     for (const auto& n : coastNodes_) {
-        if (n.row == -1 && n.col == -1) {
-            continue;
+        if (n.componentId > 0) {
+            maxEta = std::max(maxEta, std::abs(n.etaMax));
         }
-        maxEta = std::max(maxEta, std::abs(n.etaMax));
     }
     if (maxEta < 1e-9) maxEta = 1.0;
 
@@ -295,6 +297,7 @@ void CoastHistogramTool::paintEvent(QPaintEvent*)
     p.drawLine(chartRect.bottomLeft(), chartRect.bottomRight());
     p.drawLine(chartRect.bottomLeft(), chartRect.topLeft());
 
+    int currentComponentId = -1;
     for (int i = 0; i < barCount; ++i) {
         const auto& node = coastNodes_[i];
         double x = chartRect.left() + i * barWidth;
@@ -307,7 +310,19 @@ void CoastHistogramTool::paintEvent(QPaintEvent*)
             double lineX = x + barWidth / 2.0;
             p.drawLine(QPointF(lineX, chartRect.top()), QPointF(lineX, chartRect.bottom()));
             p.restore();
+            currentComponentId = -1;
             continue;
+        }
+
+        if (node.componentId != currentComponentId && node.componentId > 0) {
+            currentComponentId = node.componentId;
+
+            QFont font = p.font();
+            font.setPointSize(10);
+            font.setBold(true);
+            p.setFont(font);
+            p.setPen(Qt::black);
+            p.drawText(QPointF(x + barWidth / 2 - 5, chartRect.top() - 5), QString::number(currentComponentId));
         }
 
         double h = (coastNodes_[i].etaMax / maxEta) * chartRect.height();
