@@ -76,6 +76,22 @@ void CoastHistogramTool::recompute()
     update();
 }
 
+/*
+ * orderCoastNodes orders coastline nodes along the coastline.
+ *
+ * Limitations:
+ * 1. Islands / Closed loops.
+ * The algorithm finds the longest continuous path
+ * within the component rather than the full loop.
+ * This means that the island or closed loop will be partially processed.
+ *
+ * 2. Breaks (multiple components).
+ * The algorithm orders all found components separately.
+ * This allows for outputting data for all found components, adding separators.
+ *
+ * 3. Coves.
+ * Coves are processed correctly: the algorithm finds the longest simple chain.
+ */
 std::vector<CoastHistogramTool::CoastNode> CoastHistogramTool::orderCoastNodes(const std::vector<CoastNode>& nodes)
 {
     if (nodes.size() < 2) return nodes;
