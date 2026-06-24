@@ -13,6 +13,7 @@
 #include <QGraphicsLineItem>
 #include <QPen>
 #include <QFont>
+#include <QString>
 #include <cmath>
 
 GridScene::GridScene(QObject* parent)
@@ -60,6 +61,18 @@ void GridScene::rebuildRaster()
     if (!coastlineCells_.isEmpty()) {
         for (const auto* item : coastlineCells_) {
             savedCoastlineSelection.append(item->rect().topLeft());
+        }
+    }
+
+    QMap<int, QPointF> savedCoastlineLabels;
+    if (!coastlineLabelItems_.isEmpty()) {
+        for (const auto* item : coastlineLabelItems_) {
+            QString text = item->text();
+            int id = text.toInt();
+
+            if (coastlineLabels_.contains(id)) {
+                savedCoastlineLabels[id] = coastlineLabels_[id];
+            }
         }
     }
 
@@ -124,6 +137,10 @@ void GridScene::rebuildRaster()
 
     if (!savedCoastlineSelection.isEmpty()) {
         setCoastlineCells(savedCoastlineSelection);
+    }
+
+    if (!savedCoastlineLabels.isEmpty()) {
+        setCoastlineLabels(savedCoastlineLabels);
     }
 }
 
