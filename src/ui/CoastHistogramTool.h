@@ -21,8 +21,10 @@ public:
     // Set the rectangular region (in grid coordinates) and eta_max data
     void setRegion(int rowMin, int rowMax, int colMin, int colMax);
     void setEtaMaxData(const std::vector<double>& etaMax, int rows, int cols);
+    void updateEtaMaxData();
 
     void clearRegion();
+    bool hasRegion() const;
 
     void recompute();
 

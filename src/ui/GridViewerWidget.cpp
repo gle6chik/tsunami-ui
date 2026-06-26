@@ -714,6 +714,10 @@ void GridViewerWidget::onFrameChanged(int timestep)
 
     // Update coast histogram tool with current frame as eta data
     coastTool_->setEtaMaxData(frame->values, frame->rows, frame->cols);
+
+    if (coastTool_ && coastTool_->hasRegion()) {
+        coastTool_->updateEtaMaxData();
+    }
 }
 
 void GridViewerWidget::updateStatusLabel(QPointF scenePos)

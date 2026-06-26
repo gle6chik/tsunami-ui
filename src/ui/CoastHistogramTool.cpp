@@ -45,11 +45,30 @@ void CoastHistogramTool::clearRegion() {
     recompute();
 }
 
+bool CoastHistogramTool::hasRegion() const {
+    return hasRegion_;
+}
+
 void CoastHistogramTool::setEtaMaxData(const std::vector<double>& etaMax, int rows, int cols)
 {
     etaMaxData_ = etaMax;
     etaRows_ = rows;
     etaCols_ = cols;
+}
+
+void CoastHistogramTool::updateEtaMaxData() {
+    if (coastNodes_.empty() || etaMaxData_.empty()) {
+        return;
+    }
+
+    for (auto& node : coastNodes_) {
+        int idx = node.row * etaCols_ + node.col;
+        if (idx >= 0 && idx < static_cast<int>(etaMaxData_.size())) {
+            node.etaMax = etaMaxData_[idx];
+        }
+    }
+
+    update();
 }
 
 void CoastHistogramTool::recompute()
