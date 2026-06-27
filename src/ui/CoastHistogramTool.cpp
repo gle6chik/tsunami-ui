@@ -7,7 +7,7 @@
 #include <algorithm>
 #include <cmath>
 #include <queue>
-#include <QDebug>
+#include <unordered_set>
 
 CoastHistogramTool::CoastHistogramTool(QWidget* parent)
     : QWidget(parent)
@@ -198,7 +198,7 @@ std::vector<CoastHistogramTool::CoastNode> CoastHistogramTool::orderCoastNodes(c
         return farthestNode;
     };
 
-    // Building final path
+    // Building final path (for line)
     auto constructPath = [](int start, int end, std::vector<int> &parent) -> std::vector<int> {
         std::vector<int> path;
         int current = end;
@@ -212,6 +212,113 @@ std::vector<CoastHistogramTool::CoastNode> CoastHistogramTool::orderCoastNodes(c
         return path;
     };
 
+    // Checking for closed loop
+    auto isRing = [&](const std::vector<int>& comp) -> bool {
+        // Not island
+        if (comp.size() < 8) {
+            return false;
+        }
+
+        // Find bounding box of the component
+        int minR = nodes[comp[0]].row, maxR = nodes[comp[0]].row;
+        int minC = nodes[comp[0]].col, maxC = nodes[comp[0]].col;
+        for (int idx : comp) {
+            minR = std::min(minR, nodes[idx].row);
+            maxR = std::max(maxR, nodes[idx].row);
+            minC = std::min(minC, nodes[idx].col);
+            maxC = std::max(maxC, nodes[idx].col);
+        }
+
+        int height = maxR - minR + 3; // +2 for padding, +1 for 0-indexing
+        int width = maxC - minC + 3;
+
+        // Create a binary grid with padding on all sides
+        std::vector<std::vector<bool>> grid(height, std::vector<bool>(width, false));
+        for (int idx : comp) {
+            int r = nodes[idx].row - minR + 1;
+            int c = nodes[idx].col - minC + 1;
+            grid[r][c] = true;
+        }
+
+        // Fill from outside corner (0,0) using 4-connectivity
+        std::vector<std::vector<bool>> visited(height, std::vector<bool>(width, false));
+        std::queue<std::pair<int,int>> q;
+
+        q.push({0, 0});
+        visited[0][0] = true;
+
+        int dr4[] = {-1, 0, 1, 0};
+        int dc4[] = {0, 1, 0, -1};
+
+        while (!q.empty()) {
+            auto [r, c] = q.front(); q.pop();
+
+            for (int d = 0; d < 4; d++) {
+                int nr = r + dr4[d];
+                int nc = c + dc4[d];
+
+                if (nr < 0 || nr >= height || nc < 0 || nc >= width) {
+                    continue;
+                }
+
+                if (visited[nr][nc] || grid[nr][nc]) {
+                    continue;
+                }
+
+                visited[nr][nc] = true;
+                q.push({nr, nc});
+            }
+        }
+
+        // Count cells that are not component and not reachable from outside
+        int insideCells = 0;
+        int totalCells = 0;
+        for (int r = 1; r < height - 1; r++) {
+            for (int c = 1; c < width - 1; c++) {
+                totalCells++;
+                if (!grid[r][c] && !visited[r][c]) {
+                    insideCells++;
+                }
+            }
+        }
+
+        double insideRatio = (double)insideCells / totalCells;
+
+        // Protection against 8-connectivity artifacts (micro-loops)
+        const double MINIMUM_INSIDE_RATIO_FOR_RING = 0.1;
+        return insideRatio > MINIMUM_INSIDE_RATIO_FOR_RING;
+    };
+
+    // Building final path (for loop)
+    auto constructRingPath = [&](const std::vector<int>& comp) -> std::vector<int> {
+        std::vector<int> path;
+        if (comp.empty()) return path;
+
+        std::unordered_set<int> compSet(comp.begin(), comp.end());
+        std::vector<bool> used(nodes.size(), false);
+
+        int current = comp[0];
+        path.push_back(current);
+        used[current] = true;
+
+        bool progress = true;
+        while (progress) {
+            progress = false;
+
+            for (int nb : adj[current]) {
+                if (compSet.count(nb) && !used[nb]) {
+                    path.push_back(nb);
+                    used[nb] = true;
+                    current = nb;
+                    progress = true;
+                    break;
+                }
+            }
+        }
+
+        return path;
+    };
+
     // Ordering of nodes in each component
     int componentCounter = 0;
     for (const auto& comp : components) {
@@ -222,15 +329,22 @@ std::vector<CoastHistogramTool::CoastNode> CoastHistogramTool::orderCoastNodes(c
         }
 
         componentCounter++;
+        std::vector<int> path;
 
-        int startPoint = comp[0];
-        std::vector<int> parent1(nodes.size(), -1);
-        int endpointA = findFarthestNode(startPoint, comp, parent1);
+        if (isRing(comp)) {
+            path = constructRingPath(comp);
+        } else {
+            int startPoint = comp[0];
+            std::vector<int> parent1(nodes.size(), -1);
+            int endpointA = findFarthestNode(startPoint, comp, parent1);
 
-        std::vector<int> parent2(nodes.size(), -1);
-        int endpointB = findFarthestNode(endpointA, comp, parent2);
+            std::vector<int> parent2(nodes.size(), -1);
+            int endpointB = findFarthestNode(endpointA, comp, parent2);
 
-        std::vector<int> path = constructPath(endpointA, endpointB, parent2);
+            path = constructPath(endpointA, endpointB, parent2);
+        }
+
+
 
         // Add separator
         if (!finalOrderedNodes.empty()) {
