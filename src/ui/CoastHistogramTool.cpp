@@ -98,11 +98,11 @@ void CoastHistogramTool::recompute()
 /*
  * orderCoastNodes orders coastline nodes along the coastline.
  *
- * Limitations:
+ * Complex cases:
  * 1. Islands / Closed loops.
- * The algorithm finds the longest continuous path
- * within the component rather than the full loop.
- * This means that the island or closed loop will be partially processed.
+ * Full perimeter traversal via constructRingPath().
+ * Detection: 4-connection fill from outside - if component encloses
+ * unreachable cells, it is ring.
  *
  * 2. Breaks (multiple components).
  * The algorithm orders all found components separately.

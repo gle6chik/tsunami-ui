@@ -45,10 +45,10 @@ point to a simulator via **Browse…**.
 ## Data & results
 Paths resolve from `NSKTSH_DATA` / `NSKTSH_RESULTS` (default `../Data`, `../Results`). No absolute paths in code.
 
-## Limitations
+## Complex cases
 ### CoastlineHistogramTool
 The coastline ordering algorithm handles complex cases as follows:
-- **Islands / closed loops**: The algorithm finds the longest continuous path within the component rather than the full loop. This means that an island or closed loop will be partially processed.
+- **Islands / closed loops**: Full perimeter traversal via constructRingPath(). Detection: 4-connection fill from outside - if component encloses unreachable cells, it is ring.
 - **Breaks (multiple components)**: The algorithm orders all found components separately. This allows for outputting data for all found components, adding separators.
 - **Coves**: Coves are processed correctly: the algorithm finds the longest simple chain.
 
