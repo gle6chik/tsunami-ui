@@ -66,6 +66,11 @@ void CoastHistogramTool::updateEtaMaxData() {
             continue;
         }
 
+        if (node.row < 0 || node.row >= etaRows_ ||
+            node.col < 0 || node.col >= etaCols_) {
+            continue;
+        }
+
         int idx = node.row * etaCols_ + node.col;
         if (idx >= 0 && idx < static_cast<int>(etaMaxData_.size())) {
             node.etaMax = etaMaxData_[idx];
