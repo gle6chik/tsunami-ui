@@ -296,7 +296,9 @@ std::vector<CoastHistogramTool::CoastNode> CoastHistogramTool::orderCoastNodes(c
     // Building final path (for loop)
     auto constructRingPath = [&](const std::vector<int>& comp) -> std::vector<int> {
         std::vector<int> path;
-        if (comp.empty()) return path;
+        if (comp.empty()) {
+            return path;
+        }
 
         std::unordered_set<int> compSet(comp.begin(), comp.end());
         std::vector<bool> used(nodes.size(), false);
@@ -305,16 +307,37 @@ std::vector<CoastHistogramTool::CoastNode> CoastHistogramTool::orderCoastNodes(c
         path.push_back(current);
         used[current] = true;
 
-        bool progress = true;
-        while (progress) {
-            progress = false;
+        while (path.size() < comp.size()) {
+            bool found = false;
 
+            // Try to find an unvisited neighbours
             for (int nb : adj[current]) {
                 if (compSet.count(nb) && !used[nb]) {
                     path.push_back(nb);
                     used[nb] = true;
                     current = nb;
-                    progress = true;
+                    found = true;
+                    break;
+                }
+            }
+
+            // If stuck, backtrack to last node with unvisited neighbours
+            if (!found) {
+                for (int i = static_cast<int>(path.size()) - 2; i >= 0; --i) {
+                    for (int nb : adj[path[i]]) {
+                        if (compSet.count(nb) && !used[nb]) {
+                            current = path[i];
+                            found = true;
+                            break;
+                        }
+                    }
+
+                    if (found) {
+                        break;
+                    }
+                }
+
+                if (!found) {
                     break;
                 }
             }
