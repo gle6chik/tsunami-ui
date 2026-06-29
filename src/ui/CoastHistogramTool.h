@@ -45,6 +45,7 @@ private:
         int row, col;
         double etaMax;
         int componentId = -1;
+        bool isSeparator = false;
     };
 
     std::vector<CoastNode> findCoastNodes();

@@ -62,6 +62,10 @@ void CoastHistogramTool::updateEtaMaxData() {
     }
 
     for (auto& node : coastNodes_) {
+        if (node.isSeparator) {
+            continue;
+        }
+
         int idx = node.row * etaCols_ + node.col;
         if (idx >= 0 && idx < static_cast<int>(etaMaxData_.size())) {
             node.etaMax = etaMaxData_[idx];
@@ -352,6 +356,7 @@ std::vector<CoastHistogramTool::CoastNode> CoastHistogramTool::orderCoastNodes(c
             separator.row = -1;
             separator.col = -1;
             separator.etaMax = -1.0;
+            separator.isSeparator = true;
             finalOrderedNodes.push_back(separator);
         }
 
@@ -433,7 +438,7 @@ void CoastHistogramTool::paintEvent(QPaintEvent*)
 
     double maxEta = 0;
     for (const auto& n : coastNodes_) {
-        if (n.componentId > 0) {
+        if (!n.isSeparator && n.componentId > 0) {
             maxEta = std::max(maxEta, std::abs(n.etaMax));
         }
     }
@@ -452,7 +457,7 @@ void CoastHistogramTool::paintEvent(QPaintEvent*)
         double x = chartRect.left() + i * barWidth;
 
         // Draw separator
-        if (node.etaMax < 0) {
+        if (node.isSeparator) {
             p.save();
             QPen separatorPen(Qt::red, 1, Qt::DashLine);
             p.setPen(separatorPen);
