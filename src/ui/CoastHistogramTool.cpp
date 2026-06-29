@@ -86,7 +86,9 @@ void CoastHistogramTool::recompute()
 
     QVector<QPointF> points;
     for (const auto& node : coastNodes_) {
-        points.append(QPointF(node.col, node.row));
+        if (!node.isSeparator) {
+            points.append(QPointF(node.col, node.row));
+        }
     }
     emit coastlineCellsCalculated(points);
 
