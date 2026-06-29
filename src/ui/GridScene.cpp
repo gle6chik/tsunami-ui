@@ -648,7 +648,8 @@ void GridScene::setCoastlineLabels(const QMap<int, QPointF>& labels)
 
         QGraphicsSimpleTextItem* textItem = new QGraphicsSimpleTextItem(QString::number(id));
 
-        textItem->setPos(pos.x() - 5, pos.y() - 15);
+        textItem->setFlag(QGraphicsItem::ItemIgnoresTransformations, true);
+        textItem->setPos(pos.x(), pos.y());
         textItem->setBrush(Qt::white);
         textItem->setFont(QFont("Arial", 10, QFont::Bold));
 
