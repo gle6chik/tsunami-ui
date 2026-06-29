@@ -124,24 +124,44 @@ void CoastHistogramTool::recompute()
  */
 std::vector<CoastHistogramTool::CoastNode> CoastHistogramTool::orderCoastNodes(const std::vector<CoastNode>& nodes)
 {
-    if (nodes.size() < 2) return nodes;
-
-    // Construction of an adjacency graph (8-connectedness)
-    auto areNeighbours8 = [](const CoastNode& n1, const CoastNode& n2) -> bool {
-        int dr = std::abs(n1.row - n2.row);
-        int dc = std::abs(n1.col - n2.col);
-        return (dr <= 1 && dc <= 1 && (dr + dc > 0));
-    };
+    if (nodes.size() < 2) {
+        return nodes;
+    }
 
     std::vector<std::vector<int>> adj(nodes.size());
-    for (int i = 0; i < nodes.size(); ++i) {
-        for (int j = i + 1; j < nodes.size(); ++j) {
-            if (areNeighbours8(nodes[i], nodes[j])) {
-                adj[i].push_back(j);
-                adj[j].push_back(i);
+
+    std::unordered_map<int, std::unordered_map<int, int>> spatialIndex;
+    for (int i = 0; i < static_cast<int>(nodes.size()); ++i) {
+        spatialIndex[nodes[i].row][nodes[i].col] = i;
+    }
+
+    const int dr8[] = {-1, -1, -1, 0, 0, 1, 1, 1};
+    const int dc8[] = {-1, 0, 1, -1, 1, -1, 0, 1};
+
+    for (int i = 0; i < static_cast<int>(nodes.size()); ++i) {
+        int r = nodes[i].row;
+        int c = nodes[i].col;
+
+        for (int d = 0; d < 8; ++d) {
+            int nr = r + dr8[d];
+            int nc = c + dc8[d];
+
+            auto rowIt = spatialIndex.find(nr);
+            if (rowIt != spatialIndex.end()) {
+                auto colIt = rowIt->second.find(nc);
+
+                if (colIt != rowIt->second.end()) {
+                    int j = colIt->second;
+
+                    if (j > i) {
+                        adj[i].push_back(j);
+                        adj[j].push_back(i);
+                    }
+                }
             }
         }
     }
+
 
     // Finding all connected components
     std::vector<bool> visited(nodes.size(), false);
@@ -170,7 +190,7 @@ std::vector<CoastHistogramTool::CoastNode> CoastHistogramTool::orderCoastNodes(c
     std::vector<CoastNode> finalOrderedNodes;
 
     // Finding the farthest node
-    auto findFarthestNode = [&](int startIdx, const std::vector<int> &comp, std::vector<int> &parent) -> int {
+    auto findFarthestNode = [&](int startIdx, const std::unordered_set<int> &compSet, std::vector<int> &parent) -> int {
         std::vector<bool> was_visited(nodes.size(), false);
         std::queue<std::pair<int, int>> q; // Node - Distance from the start
 
@@ -196,7 +216,7 @@ std::vector<CoastHistogramTool::CoastNode> CoastHistogramTool::orderCoastNodes(c
                     continue;
                 }
 
-                if (std::find(comp.begin(), comp.end(), neighbour) == comp.end()) {
+                if (!compSet.count(neighbour)) {
                     continue;
                 }
 
@@ -368,12 +388,14 @@ std::vector<CoastHistogramTool::CoastNode> CoastHistogramTool::orderCoastNodes(c
         if (isRing(comp)) {
             path = constructRingPath(comp);
         } else {
+            std::unordered_set<int> compSet(comp.begin(), comp.end());
+
             int startPoint = comp[0];
             std::vector<int> parent1(nodes.size(), -1);
-            int endpointA = findFarthestNode(startPoint, comp, parent1);
+            int endpointA = findFarthestNode(startPoint, compSet, parent1);
 
             std::vector<int> parent2(nodes.size(), -1);
-            int endpointB = findFarthestNode(endpointA, comp, parent2);
+            int endpointB = findFarthestNode(endpointA, compSet, parent2);
 
             path = constructPath(endpointA, endpointB, parent2);
         }
