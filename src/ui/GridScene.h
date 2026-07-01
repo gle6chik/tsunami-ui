@@ -32,6 +32,7 @@ public:
     QRectF selectionRegion() const;
     void setCoastlineCells(const QVector<QPointF>& cells);
     void setCoastlineVisible(bool visible);
+    void setCoastlineLabels(const QMap<int, QPointF>& labels);
 
     // Rebuild the raster image from grid data + gradient
     void rebuildRaster();
@@ -99,6 +100,8 @@ private:
 
     QVector<QGraphicsRectItem*> coastlineCells_;
     bool coastlineVisible_ = true;
+    QMap<int, QPointF> coastlineLabels_;
+    QVector<QGraphicsSimpleTextItem*> coastlineLabelItems_;
 
     QImage overlayImage_;
     bool hasOverlay_ = false;

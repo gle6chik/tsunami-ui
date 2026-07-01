@@ -9,9 +9,11 @@
 #include <QGraphicsPixmapItem>
 #include <QGraphicsSimpleTextItem>
 #include <QGraphicsEllipseItem>
+#include <QGraphicsDropShadowEffect>
 #include <QGraphicsLineItem>
 #include <QPen>
 #include <QFont>
+#include <QString>
 #include <cmath>
 
 GridScene::GridScene(QObject* parent)
@@ -62,10 +64,14 @@ void GridScene::rebuildRaster()
         }
     }
 
+    QMap<int, QPointF> savedCoastlineLabels = coastlineLabels_;
+
     clear();
     mapTileItems_.clear();
     selectionRectItem_ = nullptr;
     coastlineCells_.clear();
+    coastlineLabelItems_.clear();
+    coastlineLabels_.clear();
 
     if (!gradient_) return;
 
@@ -121,6 +127,10 @@ void GridScene::rebuildRaster()
 
     if (!savedCoastlineSelection.isEmpty()) {
         setCoastlineCells(savedCoastlineSelection);
+    }
+
+    if (!savedCoastlineLabels.isEmpty()) {
+        setCoastlineLabels(savedCoastlineLabels);
     }
 }
 
@@ -560,12 +570,24 @@ QRectF GridScene::selectionRegion() const {
     return QRectF();
 }
 
+/*
+ * NOTE: Labels are cleared here because setCoastlineCells() is always
+ * emitted before setCoastlineLabels() in CoastHistogramTool::recompute().
+ * If the emit order changes, labels will be lost.
+ */
 void GridScene::setCoastlineCells(const QVector<QPointF> &cells) {
     for (auto* item : coastlineCells_) {
         removeItem(item);
         delete item;
     }
     coastlineCells_.clear();
+
+    for (auto* item : coastlineLabelItems_) {
+        removeItem(item);
+        delete item;
+    }
+    coastlineLabelItems_.clear();
+    coastlineLabels_.clear();
 
     if (cells.isEmpty()) {
         return;
@@ -596,7 +618,48 @@ void GridScene::setCoastlineVisible(bool visible) {
     }
 
     coastlineVisible_ = visible;
+
     for (auto* item : coastlineCells_) {
         item->setVisible(coastlineVisible_);
+    }
+
+    for (auto* item : coastlineLabelItems_) {
+        item->setVisible(coastlineVisible_);
+    }
+}
+
+void GridScene::setCoastlineLabels(const QMap<int, QPointF>& labels)
+{
+    for (auto* item : coastlineLabelItems_) {
+        removeItem(item);
+        delete item;
+    }
+    coastlineLabelItems_.clear();
+    coastlineLabels_ = labels;
+
+    for (auto it = labels.begin(); it != labels.end(); ++it) {
+        int id = it.key();
+        QPointF pos = it.value();
+
+        QGraphicsSimpleTextItem* textItem = new QGraphicsSimpleTextItem(QString::number(id));
+
+        textItem->setFlag(QGraphicsItem::ItemIgnoresTransformations, true);
+        textItem->setPos(pos.x(), pos.y());
+        textItem->setBrush(Qt::white);
+        textItem->setFont(QFont("Arial", 10, QFont::Bold));
+
+        QGraphicsDropShadowEffect* shadow = new QGraphicsDropShadowEffect;
+        shadow->setBlurRadius(3);
+        shadow->setColor(Qt::black);
+        shadow->setOffset(1, 1);
+
+        textItem->setGraphicsEffect(shadow);
+        textItem->setVisible(coastlineVisible_);
+
+        const int Z_VALUE_FOR_COASTLINE_LABELS = 101;
+        textItem->setZValue(Z_VALUE_FOR_COASTLINE_LABELS);
+
+        addItem(textItem);
+        coastlineLabelItems_.append(textItem);
     }
 }
