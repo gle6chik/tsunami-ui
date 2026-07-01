@@ -33,6 +33,7 @@ void CoastHistogramTool::setGridDataset(GridDataset* grid)
 
 void CoastHistogramTool::setRegion(int rowMin, int rowMax, int colMin, int colMax)
 {
+    globalMaxEta_ = 0;
     regionRowMin_ = rowMin;
     regionRowMax_ = rowMax;
     regionColMin_ = colMin;
@@ -42,6 +43,7 @@ void CoastHistogramTool::setRegion(int rowMin, int rowMax, int colMin, int colMa
 }
 
 void CoastHistogramTool::clearRegion() {
+    globalMaxEta_ = 0;
     hasRegion_ = false;
     droppedComponentCount_ = 0;
     recompute();
@@ -486,6 +488,11 @@ void CoastHistogramTool::paintEvent(QPaintEvent*)
     }
     if (maxEta < 1e-9) maxEta = 1.0;
 
+    if (maxEta > globalMaxEta_) {
+        globalMaxEta_ = maxEta;
+    }
+    double scaleMax = globalMaxEta_ > 0 ? globalMaxEta_ : 1.0;
+
     int barCount = static_cast<int>(coastNodes_.size());
     double barWidth = static_cast<double>(chartRect.width()) / barCount;
 
@@ -521,7 +528,7 @@ void CoastHistogramTool::paintEvent(QPaintEvent*)
             p.drawText(QPointF(x + barWidth / 2 - 5, chartRect.top() - 5), QString::number(currentComponentId));
         }
 
-        double h = (std::abs(coastNodes_[i].etaMax) / maxEta) * chartRect.height();
+        double h = (std::abs(coastNodes_[i].etaMax) / scaleMax) * chartRect.height();
         QRectF bar(x, chartRect.bottom() - h,
                    barWidth * 0.8, h);
         p.fillRect(bar, QColor(0, 100, 200));
@@ -530,7 +537,7 @@ void CoastHistogramTool::paintEvent(QPaintEvent*)
 
     // Y-axis label
     p.drawText(chartRect.topLeft() + QPoint(-25, 10),
-               QString::number(maxEta, 'f', 1) + " m");
+               QString::number(scaleMax, 'f', 1) + " m");
     p.drawText(chartRect.bottomLeft() + QPoint(-10, 15), "0");
 }
 
