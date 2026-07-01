@@ -42,6 +42,7 @@ void CoastHistogramTool::setRegion(int rowMin, int rowMax, int colMin, int colMa
 
 void CoastHistogramTool::clearRegion() {
     hasRegion_ = false;
+    droppedComponentCount_ = 0;
     recompute();
 }
 
@@ -102,7 +103,14 @@ void CoastHistogramTool::recompute()
     }
     emit coastlineLabelsReady(labels);
 
-    infoLabel_->setText(tr("Coast nodes found: %1").arg(coastNodes_.size()));
+    if (droppedComponentCount_ > 0) {
+        infoLabel_->setText(tr("Coast nodes: %1 (%2 tiny components filtered)")
+                                .arg(coastNodes_.size())
+                                .arg(droppedComponentCount_));
+    } else {
+        infoLabel_->setText(tr("Coast nodes found: %1").arg(coastNodes_.size()));
+    }
+
     update();
 }
 
@@ -333,9 +341,11 @@ std::vector<CoastHistogramTool::CoastNode> CoastHistogramTool::orderCoastNodes(c
 
             if (!found) {
                 for (int i = static_cast<int>(path.size()) - 2; i >= 0; --i) {
+                    int node = path[i];
+
                     for (int nb : adj[path[i]]) {
                         if (compSet.count(nb) && !used[nb]) {
-                            current = path[i];
+                            current = node;
                             found = true;
                             break;
                         }
@@ -351,10 +361,12 @@ std::vector<CoastHistogramTool::CoastNode> CoastHistogramTool::orderCoastNodes(c
 
     // Ordering of nodes in each component
     int componentCounter = 0;
+    int droppedComponents = 0;
     for (const auto& comp : components) {
         // If the component is too small
         const int MINIMUM_COMPONENT_SIZE = 5;
         if (comp.size() < MINIMUM_COMPONENT_SIZE) {
+            droppedComponents++;
             continue;
         }
 
@@ -387,6 +399,7 @@ std::vector<CoastHistogramTool::CoastNode> CoastHistogramTool::orderCoastNodes(c
         }
     }
 
+    droppedComponentCount_ = droppedComponents;
     return finalOrderedNodes;
 }
 

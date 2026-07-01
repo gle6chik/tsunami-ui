@@ -50,6 +50,7 @@ private:
 
     std::vector<CoastNode> findCoastNodes();
     std::vector<CoastNode> orderCoastNodes(const std::vector<CoastNode> &nodes);
+    int droppedComponentCount_ = 0;
 
     GridDataset* grid_ = nullptr;
     std::vector<double> etaMaxData_;
