@@ -106,9 +106,13 @@ GridViewerWidget::GridViewerWidget(QWidget* parent)
 
 void GridViewerWidget::setupUI()
 {
+    // This widget is now the central map workspace. The layer tree, analysis
+    // tools and animation player are created here but hosted by MainWindow in
+    // separate QDockWidgets (re-parented via QDockWidget::setWidget). Only the
+    // map view, its gradient legend and the coordinate label live here.
     auto* mainLayout = new QVBoxLayout(this);
     mainLayout->setContentsMargins(0, 0, 0, 0);
-    mainLayout->setSpacing(0);
+    mainLayout->setSpacing(2);
 
     // Create gradient and scene BEFORE toolbar (toolbar connects to them)
     gradient_ = new GradientEditor(this);
@@ -117,20 +121,7 @@ void GridViewerWidget::setupUI()
     setupToolbar();
     mainLayout->addWidget(toolbar_);
 
-    // Horizontal splitter: layer tree | map+gradient | analysis tools
-    auto* splitter = new QSplitter(Qt::Horizontal, this);
-
-    // Layer tree (left panel) — collapsible
-    setupLayerTree();
-    splitter->addWidget(layerTree_);
-
-    // Center: map view + gradient (right of map) + status + player
-    auto* viewContainer = new QWidget(this);
-    auto* viewLayout = new QVBoxLayout(viewContainer);
-    viewLayout->setContentsMargins(0, 0, 0, 0);
-    viewLayout->setSpacing(2);
-
-    // Map + gradient side by side
+    // Map + gradient legend side by side (the central working area)
     auto* mapRow = new QHBoxLayout;
     mapRow->setSpacing(2);
 
@@ -198,28 +189,20 @@ void GridViewerWidget::setupUI()
 
     mapRow->addWidget(view_, 1);
     mapRow->addWidget(gradient_);  // gradient bar right of map
-    viewLayout->addLayout(mapRow, 1);
+    mainLayout->addLayout(mapRow, 1);
 
     coordLabel_ = new QLabel(this);
-    viewLayout->addWidget(coordLabel_);
+    mainLayout->addWidget(coordLabel_);
 
-    // Animation player at the bottom of the map view
+    // Dock-hosted panels: created here, placed into docks by MainWindow.
+    setupLayerTree();
+
     animPlayer_ = new AnimationPlayer(this);
     connect(animPlayer_, &AnimationPlayer::frameChanged,
             this, &GridViewerWidget::onFrameChanged);
-    viewLayout->addWidget(animPlayer_);
-
-    splitter->addWidget(viewContainer);
-
-    // Right: analysis tabs (Profile, Coast Histogram) — collapsible
-    auto* analysisTabs = new QTabWidget(this);
-    analysisTabs->setMinimumWidth(100);
 
     profileTool_ = new ProfileTool(this);
-    analysisTabs->addTab(profileTool_, tr("Profile"));
-
     coastTool_ = new CoastHistogramTool(this);
-    analysisTabs->addTab(coastTool_, tr("Coast"));
 
     connect(coastTool_, &CoastHistogramTool::coastlineCellsCalculated, this, [this](const QVector<QPointF>& points) {
         if (scene_) {
@@ -238,23 +221,6 @@ void GridViewerWidget::setupUI()
             scene_->setCoastlineLabels(labels);
         }
     });
-
-    splitter->addWidget(analysisTabs);
-
-    // Panel 0 (layer tree): collapsible, compact
-    splitter->setCollapsible(0, true);
-    splitter->setStretchFactor(0, 0);
-    // Panel 1 (map): not collapsible, takes most space
-    splitter->setCollapsible(1, false);
-    splitter->setStretchFactor(1, 4);
-    // Panel 2 (analysis): collapsible
-    splitter->setCollapsible(2, true);
-    splitter->setStretchFactor(2, 1);
-
-    // Initial sizes: layer tree ~180, map stretches, analysis ~250
-    splitter->setSizes({180, 800, 250});
-
-    mainLayout->addWidget(splitter, 1);
 
     // Connect gradient changes to scene rebuild
     connect(gradient_, &GradientEditor::gradientChanged, this, [this]() {

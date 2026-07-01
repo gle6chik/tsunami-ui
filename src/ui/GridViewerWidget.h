@@ -38,6 +38,8 @@ public:
     AnimationPlayer* animationPlayer() const { return animPlayer_; }
     ProfileTool* profileTool() const { return profileTool_; }
     CoastHistogramTool* coastTool() const { return coastTool_; }
+    // Layer tree is hosted by MainWindow in a dock; expose it for re-parenting.
+    QTreeWidget* layerTreeWidget() const { return layerTree_; }
 
     // Show overlay frame (from animation)
     void setOverlayData(const std::vector<double>& data, int rows, int cols,

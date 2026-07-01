@@ -3,6 +3,9 @@
 #include "GridViewerWidget.h"
 #include "GridScene.h"
 #include "SimulationRunnerWidget.h"
+#include "ProfileTool.h"
+#include "CoastHistogramTool.h"
+#include "AnimationPlayer.h"
 #include "model/Project.h"
 #include "model/ParameterSet.h"
 #include "model/GridDataset.h"
@@ -10,13 +13,20 @@
 #include "geo/TileProvider.h"
 #include "io/AsyncGridLoader.h"
 
-#include <QTabWidget>
+#include <QDockWidget>
+#include <QTreeWidget>
+#include <QMenu>
 #include <QMenuBar>
 #include <QFileDialog>
 #include <QStatusBar>
 #include <QLabel>
 #include <QSettings>
 #include <QMessageBox>
+#include <QCloseEvent>
+
+// Bump when the dock set / object names change so restoreState() rejects
+// incompatible saved layouts instead of restoring them wrongly.
+static constexpr int kLayoutVersion = 1;
 
 MainWindow::MainWindow(QWidget* parent)
     : QMainWindow(parent),
@@ -25,10 +35,17 @@ MainWindow::MainWindow(QWidget* parent)
 {
     setWindowTitle(tr("Tsunami Simulator UI"));
     resize(1400, 900);
+    setDockNestingEnabled(true);
+    setDockOptions(QMainWindow::AnimatedDocks | QMainWindow::AllowNestedDocks
+                   | QMainWindow::AllowTabbedDocks | QMainWindow::GroupedDragging);
 
-    setupMenuBar();
-    setupTabs();
+    setupDocks();      // creates panels + docks, map = central widget
+    setupMenuBar();    // File menu
+    setupViewMenu();   // View > Panels (toggle) + Reset Layout
     connectModules();
+
+    applyDefaultLayout();
+    restoreLayout();   // saved arrangement overrides defaults if present
 
     statusBar()->showMessage(tr("Ready"));
 }
@@ -124,19 +141,118 @@ void MainWindow::setupMenuBar()
     connect(exitAction, &QAction::triggered, this, &QMainWindow::close);
 }
 
-void MainWindow::setupTabs()
+QDockWidget* MainWindow::makeDock(const QString& title, const QString& objectName,
+                                  QWidget* content)
 {
-    tabs_ = new QTabWidget(this);
-    setCentralWidget(tabs_);
+    auto* dock = new QDockWidget(title, this);
+    dock->setObjectName(objectName);   // required for saveState/restoreState
+    dock->setWidget(content);          // re-parents content into the dock
+    dock->setFeatures(QDockWidget::DockWidgetMovable
+                      | QDockWidget::DockWidgetFloatable
+                      | QDockWidget::DockWidgetClosable);
+    return dock;
+}
 
+void MainWindow::setupDocks()
+{
     paramEditor_ = new ParameterEditorWidget(this);
-    tabs_->addTab(paramEditor_, tr("Parameters"));
+    gridViewer_  = new GridViewerWidget(this);
+    simRunner_   = new SimulationRunnerWidget(this);
 
-    gridViewer_ = new GridViewerWidget(this);
-    tabs_->addTab(gridViewer_, tr("Map && Results"));
+    // The map canvas is the central working area; everything else is a dock.
+    setCentralWidget(gridViewer_);
 
-    simRunner_ = new SimulationRunnerWidget(this);
-    tabs_->addTab(simRunner_, tr("Simulation"));
+    layersDock_     = makeDock(tr("Layers"), "layersDock",
+                               gridViewer_->layerTreeWidget());
+    parametersDock_ = makeDock(tr("Parameters"), "parametersDock", paramEditor_);
+    profileDock_    = makeDock(tr("Profile"), "profileDock",
+                               gridViewer_->profileTool());
+    coastDock_      = makeDock(tr("Coast Histogram"), "coastDock",
+                               gridViewer_->coastTool());
+    timelineDock_   = makeDock(tr("Timeline"), "timelineDock",
+                               gridViewer_->animationPlayer());
+    simulationDock_ = makeDock(tr("Simulation Console"), "simulationDock",
+                               simRunner_);
+
+    addDockWidget(Qt::LeftDockWidgetArea, layersDock_);
+    addDockWidget(Qt::RightDockWidgetArea, parametersDock_);
+    addDockWidget(Qt::RightDockWidgetArea, profileDock_);
+    addDockWidget(Qt::RightDockWidgetArea, coastDock_);
+    addDockWidget(Qt::BottomDockWidgetArea, timelineDock_);
+    addDockWidget(Qt::BottomDockWidgetArea, simulationDock_);
+
+    // Side docks keep full height; the bottom row serves the central map.
+    setCorner(Qt::BottomLeftCorner, Qt::LeftDockWidgetArea);
+    setCorner(Qt::BottomRightCorner, Qt::RightDockWidgetArea);
+}
+
+void MainWindow::setupViewMenu()
+{
+    viewMenu_ = menuBar()->addMenu(tr("&View"));
+
+    auto* panels = viewMenu_->addMenu(tr("&Panels"));
+    for (QDockWidget* dock : {layersDock_, parametersDock_, profileDock_,
+                              coastDock_, timelineDock_, simulationDock_}) {
+        panels->addAction(dock->toggleViewAction());
+    }
+
+    viewMenu_->addSeparator();
+    auto* resetAction = viewMenu_->addAction(tr("&Reset Layout"));
+    connect(resetAction, &QAction::triggered, this, [this]() {
+        for (QDockWidget* dock : {layersDock_, parametersDock_, profileDock_,
+                                  coastDock_, timelineDock_, simulationDock_}) {
+            dock->setFloating(false);
+            dock->show();
+        }
+        addDockWidget(Qt::LeftDockWidgetArea, layersDock_);
+        addDockWidget(Qt::RightDockWidgetArea, parametersDock_);
+        addDockWidget(Qt::RightDockWidgetArea, profileDock_);
+        addDockWidget(Qt::RightDockWidgetArea, coastDock_);
+        addDockWidget(Qt::BottomDockWidgetArea, timelineDock_);
+        addDockWidget(Qt::BottomDockWidgetArea, simulationDock_);
+        setCorner(Qt::BottomLeftCorner, Qt::LeftDockWidgetArea);
+        setCorner(Qt::BottomRightCorner, Qt::RightDockWidgetArea);
+        applyDefaultLayout();
+    });
+}
+
+void MainWindow::applyDefaultLayout()
+{
+    // Right column: Parameters / Profile / Coast tabbed, Parameters in front.
+    tabifyDockWidget(parametersDock_, profileDock_);
+    tabifyDockWidget(profileDock_, coastDock_);
+    parametersDock_->raise();
+
+    // Bottom row: Timeline / Simulation Console tabbed, Timeline in front.
+    tabifyDockWidget(timelineDock_, simulationDock_);
+    timelineDock_->raise();
+
+    resizeDocks({layersDock_, parametersDock_}, {240, 480}, Qt::Horizontal);
+    resizeDocks({timelineDock_}, {130}, Qt::Vertical);
+}
+
+void MainWindow::saveLayout()
+{
+    QSettings s;
+    s.setValue("mainWindow/geometry", saveGeometry());
+    s.setValue("mainWindow/state", saveState(kLayoutVersion));
+}
+
+void MainWindow::restoreLayout()
+{
+    QSettings s;
+    const QByteArray geom = s.value("mainWindow/geometry").toByteArray();
+    const QByteArray state = s.value("mainWindow/state").toByteArray();
+    if (!geom.isEmpty())
+        restoreGeometry(geom);
+    if (!state.isEmpty())
+        restoreState(state, kLayoutVersion);
+}
+
+void MainWindow::closeEvent(QCloseEvent* event)
+{
+    saveLayout();
+    QMainWindow::closeEvent(event);
 }
 
 void MainWindow::connectModules()
@@ -188,7 +304,6 @@ void MainWindow::loadBathymetry(const QString& path)
                 .arg(path)
                 .arg(project_->gridDataset()->rows())
                 .arg(project_->gridDataset()->cols()));
-            tabs_->setCurrentWidget(gridViewer_);
         } else {
             statusBar()->showMessage(tr("Failed to load: %1").arg(path));
             QMessageBox::warning(this, tr("Error"),
@@ -211,7 +326,8 @@ void MainWindow::onSimulationFinished(bool success, const QString& outputDir)
             project_->resultDataset()->scanDirectory(outputDir);
             gridViewer_->setResultDataset(project_->resultDataset());
             gridViewer_->addResultLayer(QFileInfo(outputDir).fileName());
-            tabs_->setCurrentWidget(gridViewer_);
+            timelineDock_->show();   // un-hide if the user had closed it
+            timelineDock_->raise();
         }
     }
 }
