@@ -64,17 +64,7 @@ void GridScene::rebuildRaster()
         }
     }
 
-    QMap<int, QPointF> savedCoastlineLabels;
-    if (!coastlineLabelItems_.isEmpty()) {
-        for (const auto* item : coastlineLabelItems_) {
-            QString text = item->text();
-            int id = text.toInt();
-
-            if (coastlineLabels_.contains(id)) {
-                savedCoastlineLabels[id] = coastlineLabels_[id];
-            }
-        }
-    }
+    QMap<int, QPointF> savedCoastlineLabels = coastlineLabels_;
 
     clear();
     mapTileItems_.clear();
