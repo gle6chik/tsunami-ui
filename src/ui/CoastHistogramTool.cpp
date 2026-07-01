@@ -479,7 +479,7 @@ void CoastHistogramTool::paintEvent(QPaintEvent*)
     QRect chartArea = rect().adjusted(0, topOffset, 0, 0);
 
     int margin = 30;
-    QRect chartRect = chartArea.adjusted(margin, margin, -margin, -margin);
+    QRect chartRect = chartArea.adjusted(margin, margin, -margin, -margin - 20);
     if (chartRect.width() < 10 || chartRect.height() < 10) return;
 
     double maxEta = 0;
@@ -537,10 +537,75 @@ void CoastHistogramTool::paintEvent(QPaintEvent*)
         p.drawRect(bar);
     }
 
+    // Axis labels and tick marks
+    QFont axisFont = p.font();
+    axisFont.setPointSize(10);
+    p.setFont(axisFont);
+    p.setPen(Qt::black);
+
     // Y-axis label
-    p.drawText(chartRect.topLeft() + QPoint(-25, 10),
-               QString::number(scaleMax, 'f', 1) + " m");
-    p.drawText(chartRect.bottomLeft() + QPoint(-10, 15), "0");
+    p.save();
+    p.translate(15, chartRect.center().y());
+    p.rotate(-90);
+    p.drawText(QRect(-80, -10, 160, 20), Qt::AlignCenter, tr("Wave height (m)"));
+    p.restore();
+
+    // Y-axis tick marks
+    const int Y_TICKS = 5;
+    for (int i = 0; i <= Y_TICKS; ++i) {
+        double value = (i / static_cast<double>(Y_TICKS)) * scaleMax;
+        int y = chartRect.bottom() - (i / static_cast<double>(Y_TICKS)) * chartRect.height();
+
+        p.drawLine(chartRect.left() - 5, y, chartRect.left(), y);
+
+        QString label = QString::number(value, 'f', 1);
+        p.drawText(QRect(chartRect.left() - 50, y - 8, 40, 16),
+                   Qt::AlignRight | Qt::AlignVCenter,
+                   label);
+    }
+
+    // X-axis label
+    p.drawText(QRect(chartRect.center().x() - 100,
+                     chartRect.bottom() + 20,
+                     200, 20),
+               Qt::AlignCenter,
+               tr("Point index"));
+
+    // X-axis tick marks
+    int tickStep = 1;
+    if (barCount > 50) tickStep = 5;
+    if (barCount > 200) tickStep = 10;
+    if (barCount > 500) tickStep = 25;
+    if (barCount > 1000) tickStep = 50;
+
+    int maxTicks = chartRect.width() / 50;
+    if (tickStep * maxTicks < barCount) {
+        tickStep = std::ceil(barCount / static_cast<double>(maxTicks));
+    }
+    tickStep = std::max(1, tickStep);
+
+    int localIndex = 0;
+    for (int i = 0; i < barCount; ++i) {
+        const auto& node = coastNodes_[i];
+
+        if (node.isSeparator) {
+            localIndex = 0;
+            continue;
+        }
+
+        if (localIndex % tickStep == 0) {
+            double x = chartRect.left() + i * barWidth + barWidth / 2;
+
+            p.drawLine(QPointF(x, chartRect.bottom()),
+                       QPointF(x, chartRect.bottom() + 5));
+
+            p.drawText(QRectF(x - 15, chartRect.bottom() + 6, 30, 16),
+                       Qt::AlignHCenter | Qt::AlignTop,
+                       QString::number(localIndex));
+        }
+
+        localIndex++;
+    }
 }
 
 void CoastHistogramTool::onShowCoastlineToggled(bool state) {
