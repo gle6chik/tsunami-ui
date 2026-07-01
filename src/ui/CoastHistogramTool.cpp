@@ -499,7 +499,7 @@ void CoastHistogramTool::paintEvent(QPaintEvent*)
             p.drawText(QPointF(x + barWidth / 2 - 5, chartRect.top() - 5), QString::number(currentComponentId));
         }
 
-        double h = (coastNodes_[i].etaMax / maxEta) * chartRect.height();
+        double h = (std::abs(coastNodes_[i].etaMax) / maxEta) * chartRect.height();
         QRectF bar(x, chartRect.bottom() - h,
                    barWidth * 0.8, h);
         p.fillRect(bar, QColor(0, 100, 200));
