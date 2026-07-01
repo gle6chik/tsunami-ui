@@ -133,6 +133,9 @@ void CoastHistogramTool::recompute()
 std::vector<CoastHistogramTool::CoastNode> CoastHistogramTool::orderCoastNodes(const std::vector<CoastNode>& nodes)
 {
     if (nodes.size() < 2) {
+        for (auto& node : nodes) {
+            node.componentId = 1;
+        }
         return nodes;
     }
 
