@@ -8,6 +8,7 @@
 #include <cmath>
 #include <queue>
 #include <unordered_set>
+#include <unordered_map>
 
 CoastHistogramTool::CoastHistogramTool(QWidget* parent)
     : QWidget(parent)
