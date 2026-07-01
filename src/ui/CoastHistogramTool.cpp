@@ -111,7 +111,7 @@ void CoastHistogramTool::recompute()
  *
  * Complex cases:
  * 1. Islands / Closed loops.
- * Full perimeter traversal via constructRingPath().
+ * Full perimeter traversal via traverseComponent().
  * Detection: 4-connection fill from outside - if component encloses
  * unreachable cells, it is ring.
  *
@@ -120,7 +120,7 @@ void CoastHistogramTool::recompute()
  * This allows for outputting data for all found components, adding separators.
  *
  * 3. Coves.
- * Coves are processed correctly: the algorithm finds the longest simple chain.
+ * Traversal from the farthest endpoint via greedy walk with backtracking.
  */
 std::vector<CoastHistogramTool::CoastNode> CoastHistogramTool::orderCoastNodes(const std::vector<CoastNode>& nodes)
 {
@@ -229,20 +229,6 @@ std::vector<CoastHistogramTool::CoastNode> CoastHistogramTool::orderCoastNodes(c
         return farthestNode;
     };
 
-    // Building final path (for line)
-    auto constructPath = [](int start, int end, std::vector<int> &parent) -> std::vector<int> {
-        std::vector<int> path;
-        int current = end;
-
-        while (current != -1) {
-            path.push_back(current);
-            current = parent[current];
-        }
-
-        std::reverse(path.begin(), path.end());
-        return path;
-    };
-
     // Checking for closed loop
     auto isRing = [&](const std::vector<int>& comp) -> bool {
         // Not island
@@ -320,24 +306,21 @@ std::vector<CoastHistogramTool::CoastNode> CoastHistogramTool::orderCoastNodes(c
         return insideRatio > MINIMUM_INSIDE_RATIO_FOR_RING;
     };
 
-    // Building final path (for loop)
-    auto constructRingPath = [&](const std::vector<int>& comp) -> std::vector<int> {
+    // Building final path
+    auto traverseComponent = [&](const std::vector<int>& comp, int startNode) -> std::vector<int> {
         std::vector<int> path;
-        if (comp.empty()) {
-            return path;
-        }
+        if (comp.empty()) return path;
 
         std::unordered_set<int> compSet(comp.begin(), comp.end());
         std::vector<bool> used(nodes.size(), false);
 
-        int current = comp[0];
+        int current = startNode;
         path.push_back(current);
         used[current] = true;
 
         while (path.size() < comp.size()) {
             bool found = false;
 
-            // Try to find an unvisited neighbours
             for (int nb : adj[current]) {
                 if (compSet.count(nb) && !used[nb]) {
                     path.push_back(nb);
@@ -348,7 +331,6 @@ std::vector<CoastHistogramTool::CoastNode> CoastHistogramTool::orderCoastNodes(c
                 }
             }
 
-            // If stuck, backtrack to last node with unvisited neighbours
             if (!found) {
                 for (int i = static_cast<int>(path.size()) - 2; i >= 0; --i) {
                     for (int nb : adj[path[i]]) {
@@ -358,15 +340,9 @@ std::vector<CoastHistogramTool::CoastNode> CoastHistogramTool::orderCoastNodes(c
                             break;
                         }
                     }
-
-                    if (found) {
-                        break;
-                    }
+                    if (found) break;
                 }
-
-                if (!found) {
-                    break;
-                }
+                if (!found) break;
             }
         }
 
@@ -386,21 +362,13 @@ std::vector<CoastHistogramTool::CoastNode> CoastHistogramTool::orderCoastNodes(c
         std::vector<int> path;
 
         if (isRing(comp)) {
-            path = constructRingPath(comp);
+            path = traverseComponent(comp, comp[0]);
         } else {
             std::unordered_set<int> compSet(comp.begin(), comp.end());
-
-            int startPoint = comp[0];
-            std::vector<int> parent1(nodes.size(), -1);
-            int endpointA = findFarthestNode(startPoint, compSet, parent1);
-
-            std::vector<int> parent2(nodes.size(), -1);
-            int endpointB = findFarthestNode(endpointA, compSet, parent2);
-
-            path = constructPath(endpointA, endpointB, parent2);
+            std::vector<int> parent(nodes.size(), -1);
+            int startNode = findFarthestNode(comp[0], compSet, parent);
+            path = traverseComponent(comp, startNode);
         }
-
-
 
         // Add separator
         if (!finalOrderedNodes.empty()) {
