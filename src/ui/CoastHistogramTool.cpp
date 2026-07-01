@@ -82,6 +82,10 @@ void CoastHistogramTool::updateEtaMaxData() {
     update();
 }
 
+/*
+ * IMPORTANT: coastlineCellsCalculated must be emitted before
+ * coastlineLabelsReady. GridScene::setCoastlineCells() clears labels.
+ */
 void CoastHistogramTool::recompute()
 {
     coastNodes_ = findCoastNodes();
