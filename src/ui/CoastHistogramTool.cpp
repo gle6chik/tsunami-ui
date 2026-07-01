@@ -351,19 +351,21 @@ std::vector<CoastHistogramTool::CoastNode> CoastHistogramTool::orderCoastNodes(c
             }
 
             if (!found) {
+                bool backtracked = false;
                 for (int i = static_cast<int>(path.size()) - 2; i >= 0; --i) {
-                    int node = path[i];
-
                     for (int nb : adj[path[i]]) {
                         if (compSet.count(nb) && !used[nb]) {
-                            current = node;
-                            found = true;
+                            for (int j = static_cast<int>(path.size()) - 1; j > i; --j) {
+                                path.push_back(path[j - 1]);
+                            }
+                            current = path.back();
+                            backtracked = true;
                             break;
                         }
                     }
-                    if (found) break;
+                    if (backtracked) break;
                 }
-                if (!found) break;
+                if (!backtracked) break;
             }
         }
 
