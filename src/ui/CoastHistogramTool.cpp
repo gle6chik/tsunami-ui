@@ -479,7 +479,7 @@ void CoastHistogramTool::paintEvent(QPaintEvent*)
     QRect chartArea = rect().adjusted(0, topOffset, 0, 0);
 
     int margin = 30;
-    QRect chartRect = chartArea.adjusted(margin, margin, -margin, -margin - 20);
+    QRect chartRect = chartArea.adjusted(margin + 20, margin, -margin, -margin - 20);
     if (chartRect.width() < 10 || chartRect.height() < 10) return;
 
     double maxEta = 0;
