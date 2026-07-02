@@ -478,8 +478,15 @@ void CoastHistogramTool::paintEvent(QPaintEvent*)
     int topOffset = 50;
     QRect chartArea = rect().adjusted(0, topOffset, 0, 0);
 
-    int margin = 30;
-    QRect chartRect = chartArea.adjusted(margin, margin, -margin, -margin);
+    const int tickLen    = 5;
+    const int labelGap   = 2;
+    const int titleGap   = 8;
+    const int edgePad    = 5;
+
+    const int axisReserve = tickLen + labelGap + 16 + titleGap + 20 + edgePad;
+
+    // int margin = 30;
+    QRect chartRect = chartArea.adjusted(axisReserve, 30, -30, -axisReserve);
     if (chartRect.width() < 10 || chartRect.height() < 10) return;
 
     double maxEta = 0;
@@ -537,10 +544,95 @@ void CoastHistogramTool::paintEvent(QPaintEvent*)
         p.drawRect(bar);
     }
 
+    // Axis labels and tick marks
+    QFont axisFont = p.font();
+    axisFont.setPointSize(10);
+    p.setFont(axisFont);
+    p.setPen(Qt::black);
+
     // Y-axis label
-    p.drawText(chartRect.topLeft() + QPoint(-25, 10),
-               QString::number(scaleMax, 'f', 1) + " m");
-    p.drawText(chartRect.bottomLeft() + QPoint(-10, 15), "0");
+    p.save();
+    p.translate(edgePad + 10, chartRect.center().y());;
+    p.rotate(-90);
+    p.drawText(QRect(-80, -10, 160, 20), Qt::AlignCenter, tr("Wave height (m)"));
+    p.restore();
+
+    // Y-axis tick marks
+    const int yLabelRight = chartRect.left() - tickLen - labelGap;
+    const int yLabelLeft  = yLabelRight - 40;
+    const int Y_TICKS = 5;
+    for (int i = 0; i <= Y_TICKS; ++i) {
+        double value = (i / static_cast<double>(Y_TICKS)) * scaleMax;
+        int y = chartRect.bottom() - (i / static_cast<double>(Y_TICKS)) * chartRect.height();
+
+        p.drawLine(chartRect.left() - tickLen, y, chartRect.left(), y);
+
+        QString label = QString::number(value, 'f', 1);
+        p.drawText(QRect(yLabelLeft, y - 8, 40, 16),
+                   Qt::AlignRight | Qt::AlignVCenter,
+                   label);
+    }
+
+    // X-axis label
+    p.drawText(QRect(chartRect.center().x() - 100,
+                     chartRect.bottom() + tickLen + labelGap + 16 + titleGap,
+                     200, 20),
+               Qt::AlignCenter,
+               tr("Point index (per component)"));
+
+    // X-axis tick marks
+    const int maxTicks = std::max(1, chartRect.width() / 50);
+
+    auto computeTickStep = [&](int nodeCount, double barW) -> int {
+        int minStepByWidth = static_cast<int>(std::ceil(30.0 / barW));
+        if (minStepByWidth < 1) minStepByWidth = 1;
+
+        int step = minStepByWidth;
+        if (nodeCount > 50)  step = std::max(step, 5);
+        if (nodeCount > 200) step = std::max(step, 10);
+        if (nodeCount > 500) step = std::max(step, 25);
+        if (nodeCount > 1000) step = std::max(step, 50);
+
+        if (step * maxTicks < nodeCount)
+            step = static_cast<int>(std::ceil(nodeCount / static_cast<double>(maxTicks)));
+
+        return std::max(1, step);
+    };
+
+    int tickStep = 1;
+    int localIndex = 0;
+
+    for (int i = 0; i < barCount; ++i) {
+        const auto& node = coastNodes_[i];
+
+        if (node.isSeparator) {
+            localIndex = 0;
+            continue;
+        }
+
+        if (localIndex == 0) {
+            int nextSep = barCount;
+            for (int j = i; j < barCount; ++j) {
+                if (coastNodes_[j].isSeparator) {
+                    nextSep = j;
+                    break;
+                }
+            }
+            int compNodeCount = nextSep - i;
+            tickStep = computeTickStep(compNodeCount, barWidth);
+        }
+
+        if (localIndex % tickStep == 0) {
+            double x = chartRect.left() + i * barWidth + barWidth * 0.4;
+            p.drawLine(QPointF(x, chartRect.bottom()),
+                       QPointF(x, chartRect.bottom() + tickLen));
+            p.drawText(QRectF(x - 15, chartRect.bottom() + tickLen + labelGap, 30, 16),
+                       Qt::AlignHCenter | Qt::AlignTop,
+                       QString::number(localIndex));
+        }
+
+        localIndex++;
+    }
 }
 
 void CoastHistogramTool::onShowCoastlineToggled(bool state) {
