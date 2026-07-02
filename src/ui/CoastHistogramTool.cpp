@@ -572,19 +572,27 @@ void CoastHistogramTool::paintEvent(QPaintEvent*)
                tr("Point index"));
 
     // X-axis tick marks
+    const int maxTicks = std::max(1, chartRect.width() / 50);
+
+    auto computeTickStep = [&](int nodeCount, double barW) -> int {
+        int minStepByWidth = static_cast<int>(std::ceil(30.0 / barW));
+        if (minStepByWidth < 1) minStepByWidth = 1;
+
+        int step = minStepByWidth;
+        if (nodeCount > 50)  step = std::max(step, 5);
+        if (nodeCount > 200) step = std::max(step, 10);
+        if (nodeCount > 500) step = std::max(step, 25);
+        if (nodeCount > 1000) step = std::max(step, 50);
+
+        if (step * maxTicks < nodeCount)
+            step = static_cast<int>(std::ceil(nodeCount / static_cast<double>(maxTicks)));
+
+        return std::max(1, step);
+    };
+
     int tickStep = 1;
-    if (barCount > 50) tickStep = 5;
-    if (barCount > 200) tickStep = 10;
-    if (barCount > 500) tickStep = 25;
-    if (barCount > 1000) tickStep = 50;
-
-    int maxTicks = std::max(1, chartRect.width() / 50);
-    if (tickStep * maxTicks < barCount) {
-        tickStep = std::ceil(barCount / static_cast<double>(maxTicks));
-    }
-    tickStep = std::max(1, tickStep);
-
     int localIndex = 0;
+
     for (int i = 0; i < barCount; ++i) {
         const auto& node = coastNodes_[i];
 
@@ -593,12 +601,22 @@ void CoastHistogramTool::paintEvent(QPaintEvent*)
             continue;
         }
 
+        if (localIndex == 0) {
+            int nextSep = barCount;
+            for (int j = i; j < barCount; ++j) {
+                if (coastNodes_[j].isSeparator) {
+                    nextSep = j;
+                    break;
+                }
+            }
+            int compNodeCount = nextSep - i;
+            tickStep = computeTickStep(compNodeCount, barWidth);
+        }
+
         if (localIndex % tickStep == 0) {
             double x = chartRect.left() + i * barWidth + barWidth / 2;
-
             p.drawLine(QPointF(x, chartRect.bottom()),
                        QPointF(x, chartRect.bottom() + 5));
-
             p.drawText(QRectF(x - 15, chartRect.bottom() + 6, 30, 16),
                        Qt::AlignHCenter | Qt::AlignTop,
                        QString::number(localIndex));
