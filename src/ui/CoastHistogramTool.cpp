@@ -569,7 +569,7 @@ void CoastHistogramTool::paintEvent(QPaintEvent*)
                      chartRect.bottom() + 20,
                      200, 20),
                Qt::AlignCenter,
-               tr("Point index"));
+               tr("Point index (per component)"));
 
     // X-axis tick marks
     const int maxTicks = std::max(1, chartRect.width() / 50);
