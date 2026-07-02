@@ -614,7 +614,7 @@ void CoastHistogramTool::paintEvent(QPaintEvent*)
         }
 
         if (localIndex % tickStep == 0) {
-            double x = chartRect.left() + i * barWidth + barWidth / 2;
+            double x = chartRect.left() + i * barWidth + barWidth * 0.4;
             p.drawLine(QPointF(x, chartRect.bottom()),
                        QPointF(x, chartRect.bottom() + 5));
             p.drawText(QRectF(x - 15, chartRect.bottom() + 6, 30, 16),
