@@ -578,7 +578,7 @@ void CoastHistogramTool::paintEvent(QPaintEvent*)
     if (barCount > 500) tickStep = 25;
     if (barCount > 1000) tickStep = 50;
 
-    int maxTicks = chartRect.width() / 50;
+    int maxTicks = std::max(1, chartRect.width() / 50);
     if (tickStep * maxTicks < barCount) {
         tickStep = std::ceil(barCount / static_cast<double>(maxTicks));
     }
