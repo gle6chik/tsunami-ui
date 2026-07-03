@@ -34,6 +34,7 @@ void CoastHistogramTool::setGridDataset(GridDataset* grid)
 void CoastHistogramTool::setRegion(int rowMin, int rowMax, int colMin, int colMax)
 {
     globalMaxEta_ = 0;
+    droppedComponentCount_ = 0;
     regionRowMin_ = rowMin;
     regionRowMax_ = rowMax;
     regionColMin_ = colMin;
@@ -139,6 +140,8 @@ void CoastHistogramTool::recompute()
  */
 std::vector<CoastHistogramTool::CoastNode> CoastHistogramTool::orderCoastNodes(const std::vector<CoastNode>& nodes)
 {
+    droppedComponentCount_ = 0;
+
     if (nodes.size() < 2) {
         auto result = nodes;
         for (auto& node : result) {
