@@ -279,6 +279,16 @@ void GridViewerWidget::setupToolbar()
             addResultLayer(QFileInfo(dir).fileName() + tr(" (%1 frames)").arg(results_->frameCount()));
             coordLabel_->setText(tr("Loaded: %1 frames from %2")
                 .arg(results_->frameCount()).arg(QFileInfo(dir).fileName()));
+
+            if (results_->frameCount() > 0) {
+                auto frame = results_->frame(0);
+                if (frame) {
+                    coastTool_->setEtaMaxData(frame->values, frame->rows, frame->cols);
+                    if (coastTool_->hasRegion()) {
+                        coastTool_->updateEtaMaxData();
+                    }
+                }
+            }
         }
     });
     toolbar_->addWidget(loadResultsDirBtn);
@@ -319,6 +329,10 @@ void GridViewerWidget::setupToolbar()
                     pt->setFrameData(frame->values, frame->rows, frame->cols);
                     lbl->setText(tr("Loaded: %1 (%2x%3)")
                         .arg(fname).arg(frame->rows).arg(frame->cols));
+
+                    if (ct->hasRegion()) {
+                        ct->updateEtaMaxData();
+                    }
                 } else {
                     lbl->setText(tr("Failed to load: %1").arg(fname));
                 }

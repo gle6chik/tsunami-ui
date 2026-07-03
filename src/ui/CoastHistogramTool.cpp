@@ -62,7 +62,16 @@ void CoastHistogramTool::setEtaMaxData(const std::vector<double>& etaMax, int ro
 }
 
 void CoastHistogramTool::updateEtaMaxData() {
-    if (coastNodes_.empty() || etaMaxData_.empty()) {
+    if (etaMaxData_.empty()) {
+        return;
+    }
+
+    if (coastNodes_.empty() && hasRegion_ && grid_ && grid_->isLoaded()) {
+        recompute();
+        return;
+    }
+
+    if (coastNodes_.empty()) {
         return;
     }
 
