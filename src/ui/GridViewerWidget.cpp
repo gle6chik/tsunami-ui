@@ -50,6 +50,10 @@ public:
 
 protected:
     void mousePressEvent(QMouseEvent* event) override {
+        if (mousePressed_ && event->button() != Qt::LeftButton) {
+            return;
+        }
+
         mousePressed_ = true;
         mouseMoved_ = false;
         pressPos_ = event->pos();
@@ -71,13 +75,11 @@ protected:
     }
 
     void mouseReleaseEvent(QMouseEvent* event) override {
-        QGraphicsView::mouseReleaseEvent(event);
-
-        if (!(event->button() == Qt::LeftButton)) {
-            mousePressed_ = false;
-            mouseMoved_ = false;
+        if (mousePressed_ && event->button() != Qt::LeftButton) {
             return;
         }
+
+        QGraphicsView::mouseReleaseEvent(event);
 
         bool wasRubberBand = (dragMode() == QGraphicsView::RubberBandDrag &&
                               mousePressed_ &&
