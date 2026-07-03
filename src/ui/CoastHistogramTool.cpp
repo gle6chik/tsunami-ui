@@ -144,7 +144,7 @@ std::vector<CoastHistogramTool::CoastNode> CoastHistogramTool::orderCoastNodes(c
         for (auto& node : result) {
             node.componentId = 1;
         }
-        return nodes;
+        return result;
     }
 
     std::vector<std::vector<int>> adj(nodes.size());
