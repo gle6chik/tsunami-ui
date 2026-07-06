@@ -75,6 +75,7 @@ void CoastHistogramTool::updateEtaMaxData() {
         return;
     }
 
+    double maxEta = 0;
     for (auto& node : coastNodes_) {
         if (node.isSeparator) {
             continue;
@@ -88,7 +89,16 @@ void CoastHistogramTool::updateEtaMaxData() {
         int idx = node.row * etaCols_ + node.col;
         if (idx >= 0 && idx < static_cast<int>(etaMaxData_.size())) {
             node.etaMax = etaMaxData_[idx];
+
+            double absEta = std::abs(node.etaMax);
+            if (absEta > maxEta) {
+                maxEta = absEta;
+            }
         }
+    }
+
+    if (maxEta > globalMaxEta_) {
+        globalMaxEta_ = maxEta;
     }
 
     update();
@@ -101,6 +111,16 @@ void CoastHistogramTool::updateEtaMaxData() {
 void CoastHistogramTool::recompute()
 {
     coastNodes_ = findCoastNodes();
+
+    if (globalMaxEta_ == 0) {
+        for (const auto& node : coastNodes_) {
+            if (!node.isSeparator && node.componentId > 0) {
+                double absEta = std::abs(node.etaMax);
+                if (absEta > globalMaxEta_)
+                    globalMaxEta_ = absEta;
+            }
+        }
+    }
 
     QVector<QPointF> points;
     for (const auto& node : coastNodes_) {
@@ -501,17 +521,18 @@ void CoastHistogramTool::paintEvent(QPaintEvent*)
     QRect chartRect = chartArea.adjusted(axisReserve, 30, -30, -axisReserve);
     if (chartRect.width() < 10 || chartRect.height() < 10) return;
 
-    double maxEta = 0;
-    for (const auto& n : coastNodes_) {
-        if (!n.isSeparator && n.componentId > 0) {
-            maxEta = std::max(maxEta, std::abs(n.etaMax));
-        }
-    }
-    if (maxEta < 1e-9) maxEta = 1.0;
+    // double maxEta = 0;
+    // for (const auto& n : coastNodes_) {
+    //     if (!n.isSeparator && n.componentId > 0) {
+    //         maxEta = std::max(maxEta, std::abs(n.etaMax));
+    //     }
+    // }
+    // if (maxEta < 1e-9) maxEta = 1.0;
 
-    if (maxEta > globalMaxEta_) {
-        globalMaxEta_ = maxEta;
-    }
+    // if (maxEta > globalMaxEta_) {
+    //     globalMaxEta_ = maxEta;
+    // }
+
     double scaleMax = globalMaxEta_ > 0 ? globalMaxEta_ : 1.0;
 
     int barCount = static_cast<int>(coastNodes_.size());
