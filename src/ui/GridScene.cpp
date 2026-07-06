@@ -566,24 +566,12 @@ QRectF GridScene::selectionRegion() const {
     return QRectF();
 }
 
-/*
- * NOTE: Labels are cleared here because setCoastlineCells() is always
- * emitted before setCoastlineLabels() in CoastHistogramTool::recompute().
- * If the emit order changes, labels will be lost.
- */
 void GridScene::setCoastlineCells(const QVector<QPointF> &cells) {
     for (auto* item : coastlineCells_) {
         removeItem(item);
         delete item;
     }
     coastlineCells_.clear();
-
-    for (auto* item : coastlineLabelItems_) {
-        removeItem(item);
-        delete item;
-    }
-    coastlineLabelItems_.clear();
-    coastlineLabels_.clear();
 
     if (cells.isEmpty()) {
         return;
