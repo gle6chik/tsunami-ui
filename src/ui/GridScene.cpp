@@ -57,21 +57,25 @@ void GridScene::rebuildRaster()
         savedSelectionRect = selectionRectItem_->rect();
     }
 
-    QVector<QPointF> savedCoastlineSelection;
-    if (!coastlineCells_.isEmpty()) {
-        for (const auto* item : coastlineCells_) {
-            savedCoastlineSelection.append(item->rect().topLeft());
-        }
+    for (auto* item : coastlineCells_) {
+        removeItem(item);
     }
 
-    QMap<int, QPointF> savedCoastlineLabels = coastlineLabels_;
+    for (auto* item : coastlineLabelItems_) {
+        removeItem(item);
+    }
 
     clear();
     mapTileItems_.clear();
     selectionRectItem_ = nullptr;
-    coastlineCells_.clear();
-    coastlineLabelItems_.clear();
-    coastlineLabels_.clear();
+
+    for (auto* item : coastlineCells_) {
+        addItem(item);
+    }
+
+    for (auto* item : coastlineLabelItems_) {
+        addItem(item);
+    }
 
     if (!gradient_) return;
 
@@ -123,14 +127,6 @@ void GridScene::rebuildRaster()
         savedSelectionRect.height() > 0)
     {
         setSelectedRegion(savedSelectionRect);
-    }
-
-    if (!savedCoastlineSelection.isEmpty()) {
-        setCoastlineCells(savedCoastlineSelection);
-    }
-
-    if (!savedCoastlineLabels.isEmpty()) {
-        setCoastlineLabels(savedCoastlineLabels);
     }
 }
 
