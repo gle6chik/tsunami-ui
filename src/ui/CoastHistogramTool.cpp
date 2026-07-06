@@ -360,18 +360,21 @@ std::vector<CoastHistogramTool::CoastNode> CoastHistogramTool::orderCoastNodes(c
 
         std::unordered_set<int> compSet(comp.begin(), comp.end());
         std::vector<bool> used(nodes.size(), false);
+        int visitedCount = 0;
 
         int current = startNode;
         path.push_back(current);
         used[current] = true;
+        visitedCount = 1;
 
-        while (path.size() < comp.size()) {
+        while (visitedCount < static_cast<int>(comp.size())) {
             bool found = false;
 
             for (int nb : adj[current]) {
                 if (compSet.count(nb) && !used[nb]) {
                     path.push_back(nb);
                     used[nb] = true;
+                    visitedCount++;
                     current = nb;
                     found = true;
                     break;
@@ -383,10 +386,7 @@ std::vector<CoastHistogramTool::CoastNode> CoastHistogramTool::orderCoastNodes(c
                 for (int i = static_cast<int>(path.size()) - 2; i >= 0; --i) {
                     for (int nb : adj[path[i]]) {
                         if (compSet.count(nb) && !used[nb]) {
-                            for (int j = static_cast<int>(path.size()) - 1; j > i; --j) {
-                                path.push_back(path[j - 1]);
-                            }
-                            current = path.back();
+                            current = path[i];
                             backtracked = true;
                             break;
                         }
