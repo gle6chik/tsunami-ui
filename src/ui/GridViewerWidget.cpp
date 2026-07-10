@@ -439,6 +439,8 @@ void GridViewerWidget::removeBathymetryLayer()
     delete bathItem_;
     bathItem_ = nullptr;
 
+    clearSelection();
+
     if (grid_) {
         grid_->clear();
         scene_->setGridDataset(grid_);
@@ -667,6 +669,7 @@ void GridViewerWidget::clearOverlay()
 
 void GridViewerWidget::clearResults()
 {
+    clearSelection();
     if (results_)
         results_->clear();
     scene_->clearOverlay();
