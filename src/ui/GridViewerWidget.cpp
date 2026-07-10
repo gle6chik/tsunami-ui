@@ -625,6 +625,10 @@ void GridViewerWidget::setGridDataset(GridDataset* grid, const QString& filename
                 scene_->setOverlayData(frame->values, frame->rows, frame->cols,
                                        frame->minVal, frame->maxVal);
                 gradient_->setRange(frame->minVal, frame->maxVal);
+                coastTool_->setEtaMaxData(frame->values, frame->rows, frame->cols);
+                if (coastTool_->hasRegion()) {
+                    coastTool_->updateEtaMaxData();
+                }
             }
         }
 
