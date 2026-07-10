@@ -172,14 +172,6 @@ std::vector<CoastHistogramTool::CoastNode> CoastHistogramTool::orderCoastNodes(c
 {
     droppedComponentCount_ = 0;
 
-    if (nodes.size() < 2) {
-        auto result = nodes;
-        for (auto& node : result) {
-            node.componentId = 1;
-        }
-        return result;
-    }
-
     std::vector<std::vector<int>> adj(nodes.size());
 
     std::unordered_map<int, std::unordered_map<int, int>> spatialIndex;
