@@ -136,12 +136,17 @@ void CoastHistogramTool::recompute()
     }
     emit coastlineLabelsReady(labels);
 
+    int realNodeCount = static_cast<int>(
+        std::count_if(coastNodes_.begin(), coastNodes_.end(), [](const CoastNode& n) {
+            return !n.isSeparator;
+        }));
+
     if (droppedComponentCount_ > 0) {
         infoLabel_->setText(tr("Coast nodes: %1 (%2 tiny components filtered)")
-                                .arg(coastNodes_.size())
+                                .arg(realNodeCount)
                                 .arg(droppedComponentCount_));
     } else {
-        infoLabel_->setText(tr("Coast nodes found: %1").arg(coastNodes_.size()));
+        infoLabel_->setText(tr("Coast nodes found: %1").arg(realNodeCount));
     }
 
     update();
