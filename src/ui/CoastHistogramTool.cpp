@@ -120,7 +120,7 @@ void CoastHistogramTool::recompute()
 
     QVector<QPointF> points;
     for (const auto& node : coastNodes_) {
-        if (!node.isSeparator) {
+        if (!node.isSeparator && !node.isGap) {
             points.append(QPointF(node.col, node.row));
         }
     }
@@ -138,7 +138,7 @@ void CoastHistogramTool::recompute()
 
     int realNodeCount = static_cast<int>(
         std::count_if(coastNodes_.begin(), coastNodes_.end(), [](const CoastNode& n) {
-            return !n.isSeparator;
+            return !n.isSeparator && !n.isGap;
         }));
 
     if (droppedComponentCount_ > 0) {
@@ -430,10 +430,26 @@ std::vector<CoastHistogramTool::CoastNode> CoastHistogramTool::orderCoastNodes(c
             finalOrderedNodes.push_back(separator);
         }
 
-        for (int idx : path) {
+        for (size_t i = 0; i < path.size(); ++i) {
+            int idx = path[i];
             CoastNode node = nodes[idx];
             node.componentId = componentCounter;
             finalOrderedNodes.push_back(node);
+
+            if (i + 1 < path.size()) {
+                int nextIdx = path[i + 1];
+                int dr = std::abs(nodes[idx].row - nodes[nextIdx].row);
+                int dc = std::abs(nodes[idx].col - nodes[nextIdx].col);
+                if (dr > 1 || dc > 1) {
+                    CoastNode gap;
+                    gap.row = -1;
+                    gap.col = -1;
+                    gap.etaMax = -1.0;
+                    gap.componentId = -2;
+                    gap.isGap = true;
+                    finalOrderedNodes.push_back(gap);
+                }
+            }
         }
     }
 
@@ -510,21 +526,8 @@ void CoastHistogramTool::paintEvent(QPaintEvent*)
 
     const int axisReserve = tickLen + labelGap + 16 + titleGap + 20 + edgePad;
 
-    // int margin = 30;
     QRect chartRect = chartArea.adjusted(axisReserve, 30, -30, -axisReserve);
     if (chartRect.width() < 10 || chartRect.height() < 10) return;
-
-    // double maxEta = 0;
-    // for (const auto& n : coastNodes_) {
-    //     if (!n.isSeparator && n.componentId > 0) {
-    //         maxEta = std::max(maxEta, std::abs(n.etaMax));
-    //     }
-    // }
-    // if (maxEta < 1e-9) maxEta = 1.0;
-
-    // if (maxEta > globalMaxEta_) {
-    //     globalMaxEta_ = maxEta;
-    // }
 
     double scaleMax = globalMaxEta_ > 0 ? globalMaxEta_ : 1.0;
 
@@ -536,9 +539,10 @@ void CoastHistogramTool::paintEvent(QPaintEvent*)
     p.drawLine(chartRect.bottomLeft(), chartRect.topLeft());
 
     int currentComponentId = -1;
+    int visualIdx = 0;
     for (int i = 0; i < barCount; ++i) {
         const auto& node = coastNodes_[i];
-        double x = chartRect.left() + i * barWidth;
+        double x = chartRect.left() + visualIdx * barWidth;
 
         // Draw separator
         if (node.isSeparator) {
@@ -549,6 +553,13 @@ void CoastHistogramTool::paintEvent(QPaintEvent*)
             p.drawLine(QPointF(lineX, chartRect.top()), QPointF(lineX, chartRect.bottom()));
             p.restore();
             currentComponentId = -1;
+            visualIdx++;
+            continue;
+        }
+
+        // Space if the cells are not adjacent but follow each other
+        if (node.isGap) {
+            visualIdx++;
             continue;
         }
 
@@ -568,6 +579,8 @@ void CoastHistogramTool::paintEvent(QPaintEvent*)
                    barWidth * 0.8, h);
         p.fillRect(bar, QColor(0, 100, 200));
         p.drawRect(bar);
+
+        visualIdx++;
     }
 
     // Axis labels and tick marks
@@ -627,29 +640,37 @@ void CoastHistogramTool::paintEvent(QPaintEvent*)
 
     int tickStep = 1;
     int localIndex = 0;
+    int xAxisVisualIdx = 0;
 
     for (int i = 0; i < barCount; ++i) {
         const auto& node = coastNodes_[i];
 
         if (node.isSeparator) {
             localIndex = 0;
+            xAxisVisualIdx = 0;
+            continue;
+        }
+
+        if (node.isGap) {
+            xAxisVisualIdx++;
             continue;
         }
 
         if (localIndex == 0) {
-            int nextSep = barCount;
+            int compNodeCount = 0;
             for (int j = i; j < barCount; ++j) {
                 if (coastNodes_[j].isSeparator) {
-                    nextSep = j;
                     break;
                 }
+                if (!coastNodes_[j].isGap) {
+                    compNodeCount++;
+                }
             }
-            int compNodeCount = nextSep - i;
             tickStep = computeTickStep(compNodeCount, barWidth);
         }
 
         if (localIndex % tickStep == 0) {
-            double x = chartRect.left() + i * barWidth + barWidth * 0.4;
+            double x = chartRect.left() + xAxisVisualIdx * barWidth + barWidth * 0.4;
             p.drawLine(QPointF(x, chartRect.bottom()),
                        QPointF(x, chartRect.bottom() + tickLen));
             p.drawText(QRectF(x - 15, chartRect.bottom() + tickLen + labelGap, 30, 16),
@@ -658,6 +679,7 @@ void CoastHistogramTool::paintEvent(QPaintEvent*)
         }
 
         localIndex++;
+        xAxisVisualIdx++;
     }
 }
 
