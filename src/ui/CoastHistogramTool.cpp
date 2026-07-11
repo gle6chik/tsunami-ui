@@ -97,26 +97,12 @@ void CoastHistogramTool::updateEtaMaxData() {
         }
     }
 
-    if (maxEta > globalMaxEta_) {
-        globalMaxEta_ = maxEta;
-    }
-
     update();
 }
 
 void CoastHistogramTool::recompute()
 {
     coastNodes_ = findCoastNodes();
-
-    if (globalMaxEta_ == 0) {
-        for (const auto& node : coastNodes_) {
-            if (!node.isSeparator && node.componentId > 0) {
-                double absEta = std::abs(node.etaMax);
-                if (absEta > globalMaxEta_)
-                    globalMaxEta_ = absEta;
-            }
-        }
-    }
 
     QVector<QPointF> points;
     for (const auto& node : coastNodes_) {
@@ -685,4 +671,9 @@ void CoastHistogramTool::paintEvent(QPaintEvent*)
 
 void CoastHistogramTool::onShowCoastlineToggled(bool state) {
     emit showCoastlineChanged(state);
+}
+
+void CoastHistogramTool::setGlobalMaxEta(double maxEta) {
+    globalMaxEta_ = maxEta;
+    update();
 }

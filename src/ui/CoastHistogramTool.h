@@ -23,6 +23,8 @@ public:
     void setEtaMaxData(const std::vector<double>& etaMax, int rows, int cols);
     void updateEtaMaxData();
 
+    void setGlobalMaxEta(double maxEta);
+
     void clearRegion();
     bool hasRegion() const;
 

@@ -33,6 +33,7 @@
 #include <QtConcurrent/QtConcurrentRun>
 #include <QWheelEvent>
 #include <QApplication>
+#include <QList>
 
 // Custom view with mouse tracking, wheel zoom, and rubber band finish callback
 class TrackingGraphicsView : public QGraphicsView
@@ -163,6 +164,33 @@ void GridViewerWidget::setupUI()
 
             if (cMin == cMax || rMin == rMax) {
                 return;
+            }
+
+            auto* results = results_;
+            if (results && results->frameCount() > 0) {
+                QList<int> timesteps = results->timesteps();
+                int rMinCopy = rMin, rMaxCopy = rMax, cMinCopy = cMin, cMaxCopy = cMax;
+
+                QtConcurrent::run([results, timesteps, rMinCopy, rMaxCopy, cMinCopy, cMaxCopy]() {
+                    double globalMax = 0;
+                    for (int t : timesteps) {
+                        auto frame = results->frame(t);
+                        if (!frame) continue;
+                        if (frame->maxVal == 0 && frame->minVal == 0) continue;
+                        for (int r = rMinCopy; r <= rMaxCopy; ++r) {
+                            for (int c = cMinCopy; c <= cMaxCopy; ++c) {
+                                int idx = r * frame->cols + c;
+                                if (idx >= 0 && idx < static_cast<int>(frame->values.size())) {
+                                    double val = std::abs(frame->values[idx]);
+                                    if (val > globalMax) globalMax = val;
+                                }
+                            }
+                        }
+                    }
+                    return globalMax;
+                }).then(this, [this](double globalMax) {
+                        coastTool_->setGlobalMaxEta(globalMax);
+                    });
             }
 
             QRectF rect(cMin, rMin, cMax - cMin + 1, rMax - rMin + 1);
