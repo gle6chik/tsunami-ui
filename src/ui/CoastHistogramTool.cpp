@@ -550,7 +550,7 @@ void CoastHistogramTool::paintEvent(QPaintEvent*)
 
         if (node.isSeparator) {
             localIndex = 0;
-            xAxisVisualIdx = 0;
+            xAxisVisualIdx++;
             continue;
         }
 
