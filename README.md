@@ -48,7 +48,7 @@ Paths resolve from `NSKTSH_DATA` / `NSKTSH_RESULTS` (default `../Data`, `../Resu
 ## Complex cases
 ### CoastHistogramTool
 The coastline ordering algorithm handles complex cases as follows:
-- **Islands / closed loops**: Full perimeter traversal via traverseComponent(). Detection: 4-connection fill from outside - if component encloses unreachable cells, it is ring.
+- **Islands / closed loops**: Full perimeter traversal via traverseComponent().
 - **Breaks (multiple components)**: The algorithm orders all found components separately. This allows for outputting data for all found components, adding separators.
 - **Coves**: Traversal from the farthest endpoint via greedy walk with backtracking.
 

@@ -144,8 +144,6 @@ void CoastHistogramTool::recompute()
  * Complex cases:
  * 1. Islands / Closed loops.
  * Full perimeter traversal via traverseComponent().
- * Detection: 4-connection fill from outside - if component encloses
- * unreachable cells, it is ring.
  *
  * 2. Breaks (multiple components).
  * The algorithm orders all found components separately.
