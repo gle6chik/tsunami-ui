@@ -179,10 +179,13 @@ void GridViewerWidget::setupUI()
                         if (frame->maxVal == 0 && frame->minVal == 0) continue;
                         for (int r = rMinCopy; r <= rMaxCopy; ++r) {
                             for (int c = cMinCopy; c <= cMaxCopy; ++c) {
+                                if (r >= frame->rows || c >= frame->cols) {
+                                    continue;
+                                }
                                 int idx = r * frame->cols + c;
-                                if (idx >= 0 && idx < static_cast<int>(frame->values.size())) {
-                                    double val = std::abs(frame->values[idx]);
-                                    if (val > globalMax) globalMax = val;
+                                double val = std::abs(frame->values[idx]);
+                                if (val > globalMax) {
+                                    globalMax = val;
                                 }
                             }
                         }
