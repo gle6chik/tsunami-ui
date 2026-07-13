@@ -34,6 +34,7 @@
 #include <QWheelEvent>
 #include <QApplication>
 #include <QList>
+#include <QPointer>
 
 // Custom view with mouse tracking, wheel zoom, and rubber band finish callback
 class TrackingGraphicsView : public QGraphicsView
@@ -166,16 +167,20 @@ void GridViewerWidget::setupUI()
                 return;
             }
 
-            auto* results = results_;
-            if (results && results->frameCount() > 0) {
-                QList<int> timesteps = results->timesteps();
+            QPointer<ResultDataset> resultsPtr(results_);
+            if (resultsPtr && resultsPtr->frameCount() > 0) {
+                QList<int> timesteps = resultsPtr->timesteps();
                 int rMinCopy = rMin, rMaxCopy = rMax, cMinCopy = cMin, cMaxCopy = cMax;
                 int selectionId = coastTool_->currentSelectionId() + 1;
 
-                QtConcurrent::run([results, timesteps, rMinCopy, rMaxCopy, cMinCopy, cMaxCopy]() {
+                QtConcurrent::run([resultsPtr, timesteps, rMinCopy, rMaxCopy, cMinCopy, cMaxCopy]() {
                     double globalMax = 0;
+                    if (!resultsPtr) {
+                        return 0.0;
+                    }
+
                     for (int t : timesteps) {
-                        auto frame = results->frame(t);
+                        auto frame = resultsPtr->frame(t);
                         if (!frame) continue;
                         if (frame->maxVal == 0 && frame->minVal == 0) continue;
                         for (int r = rMinCopy; r <= rMaxCopy; ++r) {
