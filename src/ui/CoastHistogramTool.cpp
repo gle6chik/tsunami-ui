@@ -97,6 +97,10 @@ void CoastHistogramTool::updateEtaMaxData() {
         }
     }
 
+    if (globalMaxEta_ == 0) {
+        globalMaxEta_ = maxEta;
+    }
+
     update();
 }
 
