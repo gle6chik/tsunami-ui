@@ -33,6 +33,7 @@ void CoastHistogramTool::setGridDataset(GridDataset* grid)
 
 void CoastHistogramTool::setRegion(int rowMin, int rowMax, int colMin, int colMax)
 {
+    selectionId_++;
     globalMaxEta_ = 0;
     droppedComponentCount_ = 0;
     regionRowMin_ = rowMin;
@@ -594,7 +595,14 @@ void CoastHistogramTool::onShowCoastlineToggled(bool state) {
     emit showCoastlineChanged(state);
 }
 
-void CoastHistogramTool::setGlobalMaxEta(double maxEta) {
+void CoastHistogramTool::setGlobalMaxEta(double maxEta, int selectionId) {
+    if (selectionId != selectionId_) {
+        return;
+    }
     globalMaxEta_ = maxEta;
     update();
+}
+
+int CoastHistogramTool::currentSelectionId() const {
+    return selectionId_;
 }

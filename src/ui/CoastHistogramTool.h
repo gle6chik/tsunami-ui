@@ -23,7 +23,8 @@ public:
     void setEtaMaxData(const std::vector<double>& etaMax, int rows, int cols);
     void updateEtaMaxData();
 
-    void setGlobalMaxEta(double maxEta);
+    void setGlobalMaxEta(double maxEta, int selectionId);
+    int currentSelectionId() const;
 
     void clearRegion();
     bool hasRegion() const;
@@ -56,6 +57,7 @@ private:
 
     int droppedComponentCount_ = 0;
     double globalMaxEta_ = 0;
+    int selectionId_ = 0;
 
     GridDataset* grid_ = nullptr;
     std::vector<double> etaMaxData_;

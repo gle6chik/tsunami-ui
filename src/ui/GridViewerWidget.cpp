@@ -170,6 +170,7 @@ void GridViewerWidget::setupUI()
             if (results && results->frameCount() > 0) {
                 QList<int> timesteps = results->timesteps();
                 int rMinCopy = rMin, rMaxCopy = rMax, cMinCopy = cMin, cMaxCopy = cMax;
+                int selectionId = coastTool_->currentSelectionId() + 1;
 
                 QtConcurrent::run([results, timesteps, rMinCopy, rMaxCopy, cMinCopy, cMaxCopy]() {
                     double globalMax = 0;
@@ -191,8 +192,8 @@ void GridViewerWidget::setupUI()
                         }
                     }
                     return globalMax;
-                }).then(this, [this](double globalMax) {
-                        coastTool_->setGlobalMaxEta(globalMax);
+                }).then(this, [this, selectionId](double globalMax) {
+                        coastTool_->setGlobalMaxEta(globalMax, selectionId);
                     });
             }
 
