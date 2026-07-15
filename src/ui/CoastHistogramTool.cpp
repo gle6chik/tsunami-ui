@@ -111,7 +111,7 @@ void CoastHistogramTool::recompute()
 
     QVector<QPointF> points;
     for (const auto& node : coastNodes_) {
-        if (!node.isSeparator && !node.isGap) {
+        if (!node.isSeparator) {
             points.append(QPointF(node.col, node.row));
         }
     }
@@ -129,7 +129,7 @@ void CoastHistogramTool::recompute()
 
     int realNodeCount = static_cast<int>(
         std::count_if(coastNodes_.begin(), coastNodes_.end(), [](const CoastNode& n) {
-            return !n.isSeparator && !n.isGap;
+            return !n.isSeparator;
         }));
 
     if (droppedComponentCount_ > 0) {
@@ -195,12 +195,11 @@ std::vector<CoastHistogramTool::CoastNode> CoastHistogramTool::orderCoastNodes(c
         }
     }
 
-
     // Finding all connected components
     std::vector<bool> visited(nodes.size(), false);
     std::vector<std::vector<int>> components;
 
-    for (int i = 0; i < nodes.size(); ++i) {
+    for (int i = 0; i < static_cast<int>(nodes.size()); ++i) {
         if (!visited[i]) {
             std::vector<int> comp;
             std::queue<int> q;
@@ -262,51 +261,64 @@ std::vector<CoastHistogramTool::CoastNode> CoastHistogramTool::orderCoastNodes(c
         return farthestNode;
     };
 
-    // Building final path
-    auto traverseComponent = [&](const std::vector<int>& comp, int startNode) -> std::vector<int> {
+    auto buildPathFromParent = [&](int startNode, int endNode, const std::vector<int>& parent) -> std::vector<int> {
         std::vector<int> path;
-        if (comp.empty()) return path;
+        int cur = endNode;
+
+        while (cur != -1) {
+            path.push_back(cur);
+            if (cur == startNode) {
+                break;
+            }
+            cur = parent[cur];
+        }
+
+        std::reverse(path.begin(), path.end());
+        return path;
+    };
+
+    // Build main path + backtracking when reach a dead end
+    auto traverseComponent = [&](const std::vector<int>& comp, int startNode, int endNode, const std::vector<int>& parent) -> std::vector<int> {
+        std::vector<int> result;
+        if (comp.empty()) return result;
 
         std::unordered_set<int> compSet(comp.begin(), comp.end());
+        std::unordered_set<int> mainPathSet;
+
+        std::vector<int> mainPath = buildPathFromParent(startNode, endNode, parent);
+        for (int v : mainPath) {
+            mainPathSet.insert(v);
+        }
+
         std::vector<bool> used(nodes.size(), false);
-        int visitedCount = 0;
 
-        int current = startNode;
-        path.push_back(current);
-        used[current] = true;
-        visitedCount = 1;
+        std::function<void(int, int)> dfsBranch = [&](int v, int parentNode) {
+            used[v] = true;
+            result.push_back(v);
 
-        while (visitedCount < static_cast<int>(comp.size())) {
-            bool found = false;
-
-            for (int nb : adj[current]) {
-                if (compSet.count(nb) && !used[nb]) {
-                    path.push_back(nb);
-                    used[nb] = true;
-                    visitedCount++;
-                    current = nb;
-                    found = true;
-                    break;
+            for (int nb : adj[v]) {
+                if (compSet.count(nb) && nb != parentNode && !used[nb] && !mainPathSet.count(nb)) {
+                    dfsBranch(nb, v);
+                    result.push_back(v);
                 }
             }
+        };
 
-            if (!found) {
-                bool backtracked = false;
-                for (int i = static_cast<int>(path.size()) - 2; i >= 0; --i) {
-                    for (int nb : adj[path[i]]) {
-                        if (compSet.count(nb) && !used[nb]) {
-                            current = path[i];
-                            backtracked = true;
-                            break;
-                        }
-                    }
-                    if (backtracked) break;
+        for (size_t i = 0; i < mainPath.size(); ++i) {
+            int v = mainPath[i];
+
+            result.push_back(v);
+            used[v] = true;
+
+            for (int nb : adj[v]) {
+                if (compSet.count(nb) && !used[nb] && !mainPathSet.count(nb)) {
+                    dfsBranch(nb, v);
+                    result.push_back(v);
                 }
-                if (!backtracked) break;
             }
         }
 
-        return path;
+        return result;
     };
 
     // Ordering of nodes in each component
@@ -321,12 +333,14 @@ std::vector<CoastHistogramTool::CoastNode> CoastHistogramTool::orderCoastNodes(c
         }
 
         componentCounter++;
-        std::vector<int> path;
 
         std::unordered_set<int> compSet(comp.begin(), comp.end());
         std::vector<int> parent(nodes.size(), -1);
         int startNode = findFarthestNode(comp[0], compSet, parent);
-        path = traverseComponent(comp, startNode);
+        std::vector<int> parent2(nodes.size(), -1);
+        int endNode = findFarthestNode(startNode, compSet, parent2);
+
+        std::vector<int> path = traverseComponent(comp, startNode, endNode, parent2);
 
         // Add separator
         if (!finalOrderedNodes.empty()) {
@@ -343,21 +357,6 @@ std::vector<CoastHistogramTool::CoastNode> CoastHistogramTool::orderCoastNodes(c
             CoastNode node = nodes[idx];
             node.componentId = componentCounter;
             finalOrderedNodes.push_back(node);
-
-            if (i + 1 < path.size()) {
-                int nextIdx = path[i + 1];
-                int dr = std::abs(nodes[idx].row - nodes[nextIdx].row);
-                int dc = std::abs(nodes[idx].col - nodes[nextIdx].col);
-                if (dr > 1 || dc > 1) {
-                    CoastNode gap;
-                    gap.row = -1;
-                    gap.col = -1;
-                    gap.etaMax = -1.0;
-                    gap.componentId = -2;
-                    gap.isGap = true;
-                    finalOrderedNodes.push_back(gap);
-                }
-            }
         }
     }
 
@@ -465,12 +464,6 @@ void CoastHistogramTool::paintEvent(QPaintEvent*)
             continue;
         }
 
-        // Space if the cells are not adjacent but follow each other
-        if (node.isGap) {
-            visualIdx++;
-            continue;
-        }
-
         if (node.componentId != currentComponentId && node.componentId > 0) {
             currentComponentId = node.componentId;
 
@@ -559,20 +552,13 @@ void CoastHistogramTool::paintEvent(QPaintEvent*)
             continue;
         }
 
-        if (node.isGap) {
-            xAxisVisualIdx++;
-            continue;
-        }
-
         if (localIndex == 0) {
             int compNodeCount = 0;
             for (int j = i; j < barCount; ++j) {
                 if (coastNodes_[j].isSeparator) {
                     break;
                 }
-                if (!coastNodes_[j].isGap) {
-                    compNodeCount++;
-                }
+                compNodeCount++;
             }
             tickStep = computeTickStep(compNodeCount, barWidth);
         }
